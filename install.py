@@ -68,6 +68,33 @@ def setup_hyprland(source, hypr_dir, validate):
         raise
 
 
+def setup_shortcut(source, hypr_dir, validate):
+    """Install a separate, user-editable binding without replacing existing ones."""
+    destination = hypr_dir / 'keycorner-shortcuts.lua'
+    main = hypr_dir / 'bindings.lua'
+    include = 'require("hypr.keycorner-shortcuts")'
+    old = main.read_bytes() if main.exists() else b''
+    if include in old.decode():
+        return
+    binds = json.loads(subprocess.check_output(['hyprctl', '-j', 'binds'], text=True))
+    if any(b.get('modmask') == 69 and str(b.get('key', '')).upper() in ('K', 'O') for b in binds):
+        raise RuntimeError('Super+Ctrl+Shift+K or O is already bound; choose another shortcut before installing')
+    if destination.exists():
+        raise RuntimeError('Unmanaged keycorner-shortcuts.lua exists; include it manually')
+    stamp = time.time_ns()
+    if main.exists():
+        shutil.copy2(main, main.with_name(f'bindings.lua.keycorner-backup-{stamp}'))
+    try:
+        atomic_write(destination, (source / 'shortcuts.lua').read_bytes())
+        atomic_write(main, old + ('\n-- Keycorner privacy toggle.\n' + include + '\n').encode())
+        validate()
+    except Exception:
+        atomic_write(main, old)
+        destination.unlink(missing_ok=True)
+        validate()
+        raise
+
+
 def validate_hyprland():
     subprocess.run(['hyprctl', 'reload'], check=True)
     errors = subprocess.check_output(['hyprctl', 'configerrors'], text=True).strip()
@@ -89,6 +116,7 @@ def main():
         copy_runtime(source, target)
     ensure_config(config_dir / 'keycorner.json')
     setup_hyprland(source, config_root / 'hypr', validate_hyprland)
+    setup_shortcut(source, config_root / 'hypr', validate_hyprland)
     if not args.setup_only:
         shell_config = Path.home() / '.config/omarchy/shell.json'
         if shell_config.exists():

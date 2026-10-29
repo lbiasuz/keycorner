@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import QtQuick.Controls as Controls
 import "Config.js" as Config
 
@@ -35,7 +36,7 @@ Item {
     }
     function close() { updateConfig({shown: false}) }
     function dismiss() { close() }
-    function toggle() { const next = !shown; sessionClosed = false; updateConfig({shown: next}) }
+    function toggle() { const next = !shown || paused; sessionClosed = false; updateConfig({shown: next, paused: !next}) }
     Process {
         command: ['python', '-B', Qt.resolvedUrl('keycorner/config_file.py').toString().replace('file://','')]
         running: true
@@ -84,6 +85,7 @@ Item {
         try {
             const msg = JSON.parse(line)
             if (msg.theme) palette = msg.theme
+            if (!captureEnabled) return
             if (msg.type === 'layout') {
                 layout = msg.layout; connected = true
                 if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
@@ -96,10 +98,49 @@ Item {
             }
         } catch (error) { status = 'Could not read keyboard state'; connected = false }
     }
-    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused
+    // Hyprland clears activewindow before presenting session-lock surfaces.
+    // No application focus is deliberately treated as unsafe, including launchers
+    // and empty workspaces. Only the public lock IPC is consulted on re-entry.
+    property bool rawFocusBlocked: false
+    readonly property bool applicationFocused: Hyprland.activeToplevel !== null && !rawFocusBlocked
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            // activeToplevel can stay cached on lock: use the explicit IPC clear.
+            if (event.name === 'activewindowv2') root.rawFocusBlocked = event.data.trim() === ''
+        }
+    }
+    property bool unlockedConfirmed: false
+    property int focusEpoch: 0
+    function checkSession() {
+        if (applicationFocused && !lockCheck.running) {
+            lockCheck.epoch = focusEpoch
+            lockCheck.answer = ''
+            lockCheck.running = true
+        }
+    }
+    onApplicationFocusedChanged: {
+        focusEpoch++
+        unlockedConfirmed = false
+        if (applicationFocused) checkSession()
+    }
+    Component.onCompleted: checkSession()
+    Process {
+        id: lockCheck
+        property int epoch: -1
+        property string answer: ''
+        command: ['omarchy-shell', 'lock', 'isLocked']
+        stdout: StdioCollector { onStreamFinished: lockCheck.answer = text.trim() }
+        onExited: (exitCode, exitStatus) => {
+            if (epoch !== root.focusEpoch) { root.checkSession(); return }
+            root.unlockedConfirmed = exitCode === 0 && answer === 'false' && root.applicationFocused
+        }
+    }
+    readonly property bool sessionSafe: applicationFocused && unlockedConfirmed
+    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe
     onCaptureEnabledChanged: {
         pressed = []; estimate = -1
-        if (!captureEnabled) status = paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
+        if (!captureEnabled) status = !sessionSafe ? 'Session protected · input access stopped' : paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
     }
     FileView {
         path: (Quickshell.env('HOME') || '') + '/.local/state/omarchy/current/theme/colors.toml'
@@ -126,8 +167,9 @@ Item {
         function toggle(): void { root.toggle() }
         function pause(): void { root.pause() }
         function settings(): void { root.settingsOpen = true }
+        function toggleSettings(): void { root.settingsOpen = !root.settingsOpen }
         function closeSettings(): void { root.settingsOpen = false }
-        function state(): string { return JSON.stringify({config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, layers:root.layout.layers, keys:root.layout.keys.length}) }
+        function state(): string { return JSON.stringify({config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, layers:root.layout.layers, keys:root.layout.keys.length}) }
         function configure(json: string): void {
             try { root.updateConfig(JSON.parse(json)) } catch (error) { console.warn('Invalid Keycorner settings') }
         }
@@ -146,7 +188,7 @@ Item {
         title: "Keycorner Overlay"
         // Closing a backing window during hot reload must not persist a hidden state.
         onClosed: root.sessionClosed = true
-        visible: root.configReady && root.shown
+        visible: root.configReady && root.shown && root.sessionSafe
         screen: Quickshell.screens.find(s => s.name === root.monitor) || Quickshell.screens[0]
         implicitWidth: root.layout.width * root.config.keySize + 32
         implicitHeight: root.layout.height * root.config.keySize + 72

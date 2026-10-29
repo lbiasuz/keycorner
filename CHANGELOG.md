@@ -2,11 +2,16 @@
 
 ## Unreleased
 
+- Stop HID capture on Hyprland focus-clear events, including screen locking;
+  require an unlocked-session check before resuming.
+- Add configurable Super+Ctrl+Shift+K privacy and Super+Ctrl+Shift+O settings shortcuts.
+- Validate live lock/unlock shutdown; retain documented asynchronous timing limits.
+
 - Block on keyboard/control events instead of polling while connected.
 - Update themes only when files change; suppress duplicate input state.
 - Treat device labels as plain text and bound layout decompression/geometry.
 - Remove unused human-readable key strings and disable bridge core dumps.
-- Stop capture when minimized; document unresolved screen-lock privacy risk.
+- Stop capture when minimized; document password-field privacy risks.
 
 ## 0.3.1 — 2026-10-29
 

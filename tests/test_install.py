@@ -3,8 +3,9 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from install import copy_runtime, setup_hyprland, INCLUDE
+from install import copy_runtime, setup_hyprland, setup_shortcut, INCLUDE
 from keycorner.config_file import ensure_config
 
 
@@ -54,3 +55,31 @@ class InstallTests(unittest.TestCase):
             (source/'sentinel').write_text('existing checkout')
             copy_runtime(source,source)
             self.assertEqual((source/'sentinel').read_text(),'existing checkout')
+
+
+class ShortcutTests(unittest.TestCase):
+    def test_conflicting_binding_leaves_files_untouched(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'bindings.lua').write_text('-- user bindings')
+            with patch('install.subprocess.check_output', return_value='[{"modmask":69,"key":"O"}]'):
+                with self.assertRaisesRegex(RuntimeError, 'already bound'):
+                    setup_shortcut(root, root, lambda: None)
+            self.assertEqual((root / 'bindings.lua').read_text(), '-- user bindings')
+            self.assertFalse((root / 'keycorner-shortcuts.lua').exists())
+
+    def test_shortcuts_preserve_customization_and_roll_back_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'bindings.lua').write_text('-- user bindings')
+            (root / 'shortcuts.lua').write_text('-- default')
+            with patch('install.subprocess.check_output', return_value='[]'):
+                with self.assertRaises(RuntimeError):
+                    setup_shortcut(root, root, lambda: (_ for _ in ()).throw(RuntimeError('invalid')))
+                self.assertEqual((root / 'bindings.lua').read_text(), '-- user bindings')
+                self.assertFalse((root / 'keycorner-shortcuts.lua').exists())
+                setup_shortcut(root, root, lambda: None)
+                (root / 'keycorner-shortcuts.lua').write_text('-- customized')
+                setup_shortcut(root, root, lambda: None)
+                self.assertEqual((root / 'keycorner-shortcuts.lua').read_text(), '-- customized')
+                self.assertEqual((root / 'bindings.lua').read_text().count('require('), 1)

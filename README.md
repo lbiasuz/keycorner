@@ -14,6 +14,17 @@ The keyboard icon in the bar provides:
 - **Right-click:** open settings.
 - **Middle-click:** pause/resume input.
 
+**Super + Ctrl + Shift + K** hides/pauses or shows/resumes the keyboard overlay.
+**Super + Ctrl + Shift + O** opens/closes the settings panel. Customize these in
+`~/.config/hypr/keycorner-shortcuts.lua`; the installer preserves edits and rejects
+conflicting existing bindings. Neither shortcut runs on the lock screen.
+
+Capture also stops while Hyprland has no focused application (including empty
+workspaces and some launchers). Re-entry checks Omarchy's public lock status;
+failed or unknown checks leave capture off. Lock handling is event-driven, with
+no periodic polling. This is asynchronous privacy protection, not a security
+boundary against other software running as your user.
+
 The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process. Click-through mode leaves the bar button and CLI available.
 
 Settings save automatically to `~/.config/omarchy/keycorner.json` and persist across shell restarts and plugin updates. External edits reload automatically. Invalid settings keep the previous configuration and stop input access until repaired; the settings window displays the error.
@@ -83,7 +94,9 @@ omarchy plugin remove lbiasuz.keycorner
 ```
 
 Disabling unloads the plugin and stops its bridge. The settings and separate
-Hyprland rules are intentionally retained. For complete cleanup, remove the
+Hyprland rules and shortcuts are intentionally retained. Remove
+`require("hypr.keycorner-shortcuts")` from `~/.config/hypr/bindings.lua` and delete
+`~/.config/hypr/keycorner-shortcuts.lua` when uninstalling completely. For complete cleanup, remove the
 `require("hypr.keycorner")` line and its adjacent Keycorner comment from
 `~/.config/hypr/hyprland.lua`, then delete `~/.config/hypr/keycorner.lua` and,
 optionally, `~/.config/omarchy/keycorner.json`. Run `hyprctl reload` followed by
@@ -117,7 +130,7 @@ At each input-process startup, the bridge downloads the actual physical layout a
 
 HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. A held mod-tap can emit a modifier without revealing its position. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
 
-Only this model's keyboard interfaces are opened. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too. Automatic screen-lock pausing is not implemented; hide or pause before sensitive typing or locking.** The overlay has no pressed-key text line, but still highlights keys.
+Only this model's keyboard interfaces are opened. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too: use Super + Ctrl + Shift + K before sensitive typing. Screen locking automatically stops capture; unlocking resumes it if it was enabled.** The overlay has no pressed-key text line, but still highlights keys.
 
 Device permissions must be configured on each machine. No root access, input-group additions, firmware flashing, or keyboard remapping is performed. Other keyboard models, rotated KLE layouts and alternative HID descriptors need additional support.
 

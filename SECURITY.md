@@ -1,8 +1,15 @@
 # Security and privacy
 
 Keycorner reads raw keyboard output to highlight pressed keys. That access works
-across applications, including password fields. Hide or pause it before sensitive
-typing or locking the screen; automatic lock detection is not implemented yet.
+across applications, including password fields. Use Super + Ctrl + Shift + K before sensitive typing to hide the overlay and
+stop HID listening. Screen locking clears Hyprland focus and stops capture;
+unlock resumes it if enabled. Empty workspaces and some launchers also suspend
+capture. Re-entry requires a successful public Omarchy lock-status check.
+
+Lock handling is asynchronous: a small interval can exist between the lock
+request, its focus-cleared event, and bridge termination. It is not a hard
+security boundary. Manually hide/pause first when immediate shutdown matters.
+No password-field detection is attempted.
 
 There is no typing history, analytics, network client or firmware-writing feature.
 Current key state is transient in the Python bridge and shared Omarchy UI process.
