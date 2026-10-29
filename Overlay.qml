@@ -117,7 +117,6 @@ Item {
     function consume(line) {
         try {
             const msg = JSON.parse(line)
-            if (msg.theme) palette = msg.theme
             if (!captureEnabled) return
             if (msg.type === 'layout') {
                 layout = msg.layout; connected = true
@@ -175,11 +174,29 @@ Item {
         pressed = []; estimate = -1
         if (!captureEnabled) status = !sessionSafe ? 'Session protected · input access stopped' : paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
     }
+    // Theme loading must not depend on the keyboard connection or capture state.
+    property bool themePending: false
+    function refreshTheme() {
+        if (themeReader.running) themePending = true
+        else { themePending = false; themeReader.running = true }
+    }
     FileView {
         path: (Quickshell.env('HOME') || '') + '/.local/state/omarchy/current/theme/colors.toml'
         watchChanges: true
         printErrors: false
-        onFileChanged: { reload(); if (bridge.running) bridge.write('theme\n') }
+        onLoaded: root.refreshTheme()
+        onLoadFailed: root.refreshTheme()
+        onFileChanged: reload()
+    }
+    Process {
+        id: themeReader
+        command: ['python', '-B', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://',''), '--theme-only']
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root.palette = JSON.parse(text).theme } catch (error) {}
+            }
+        }
+        onExited: { if (root.themePending) root.refreshTheme() }
     }
     onAutomaticChanged: if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
     Process {

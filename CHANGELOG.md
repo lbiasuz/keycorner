@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Record shortcut combinations with focused-window shortcut inhibition, cancel and clear.
+- Simplify settings labels and rename Reference layer to Preview layer.
+- Load Omarchy colors independently of HID capture, fixing stale settings themes.
+
 - Configure all three shortcuts in settings with conflict checks and rollback.
 - Add Super+Ctrl+Shift+P to pause/resume HID input without hiding the keyboard.
 

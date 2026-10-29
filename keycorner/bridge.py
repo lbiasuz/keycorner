@@ -102,5 +102,7 @@ def main():
 
 
 if __name__ == '__main__':
-    try: main()
+    try:
+        if sys.argv[1:] == ['--theme-only']: emit(dict(theme=theme()))
+        else: main()
     except (KeyboardInterrupt, BrokenPipeError): sys.exit(0)

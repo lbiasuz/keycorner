@@ -16,6 +16,13 @@ FloatingWindow {
         anchors.fill: parent
         padding: 24
         palette.window: controller.palette.background
+        palette.light: controller.palette.lighter_background
+        palette.midlight: controller.palette.lighter_background
+        palette.dark: controller.palette.background
+        palette.mid: controller.palette.muted
+        palette.shadow: controller.palette.background
+        palette.alternateBase: controller.palette.lighter_background
+        palette.placeholderText: controller.palette.dark_foreground
         palette.base: controller.palette.lighter_background
         palette.button: controller.palette.lighter_background
         palette.text: controller.palette.foreground
@@ -31,8 +38,7 @@ FloatingWindow {
                 width: parent.width
                 spacing: 12
                 Label { textFormat: Text.PlainText; text: 'Keycorner'; font.pixelSize: 24; font.bold: true }
-                Label { textFormat: Text.PlainText; text: 'Drag the keyboard to move it; use its bottom-right grip to resize.'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                Label { textFormat: Text.PlainText; text: controller.configError; visible: text.length > 0; color: '#b4637a'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                Label { textFormat: Text.PlainText; text: controller.configError; visible: text.length > 0; color: controller.palette.red || '#b4637a'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                 RowLayout {
                     Switch { text: 'Show overlay'; checked: controller.config.shown; onToggled: controller.updateConfig({shown:checked}) }
                     Switch { text: 'Pause input'; checked: controller.config.paused; onToggled: controller.updateConfig({paused:checked}) }
@@ -59,81 +65,68 @@ FloatingWindow {
                         value: controller.config.keySize
                         onMoved: controller.updateConfig({keySize:value})
                     }
-                    Label { textFormat: Text.PlainText; text: 'Reference layer' }
+                    Label { textFormat: Text.PlainText; text: 'Preview layer' }
                     SpinBox {
                         from: 0; to: Math.max(0,controller.layout.layers-1)
                         value: controller.preview
                         onValueModified: controller.updateConfig({previewLayer:value})
                     }
                 }
-                Switch { text: 'Suggest a layer from key output'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
-                Switch { text: 'Let mouse clicks pass through the overlay'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
-                Label { textFormat: Text.PlainText;
-                    text: 'Exact layer transitions need future firmware support. Suggestions are estimates; previews show a saved layout.'
-                    wrapMode: Text.WordWrap; Layout.fillWidth: true; opacity: 0.75
-                }
-                Label { textFormat: Text.PlainText;
-                    text: 'Use the keyboard icon in the bar: click to show/hide, right-click for settings, middle-click to pause. Hiding stops input access.'
-                    wrapMode: Text.WordWrap; Layout.fillWidth: true; opacity: 0.75
-                }
+                Switch { text: 'Suggest layer'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
+                Switch { text: 'Click-through'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
                 Label { textFormat: Text.PlainText; text: 'Keyboard shortcuts'; font.bold: true; font.pixelSize: 18 }
-                Label {
-                    textFormat: Text.PlainText
-                    text: 'Use modifiers + a key, such as SUPER + CTRL + P. Leave a field blank to disable its shortcut.'
-                    wrapMode: Text.WordWrap; Layout.fillWidth: true; opacity: 0.75
-                }
-                Label { textFormat: Text.PlainText; text: 'Show / hide keyboard and resume / pause input' }
-                TextField {
+                Label { textFormat: Text.PlainText; text: 'Show / hide keyboard' }
+                ShortcutRecorder {
                     id: overlayShortcut
                     Layout.fillWidth: true; enabled: !controller.shortcutsBusy
-                    text: controller.shortcuts.toggle
-                    placeholderText: 'SUPER + CTRL + SHIFT + K'
+                    value: controller.shortcuts.toggle
+                    recorderWindow: window
                 }
                 Label { textFormat: Text.PlainText; text: 'Open / close settings' }
-                TextField {
+                ShortcutRecorder {
                     id: settingsShortcut
                     Layout.fillWidth: true; enabled: !controller.shortcutsBusy
-                    text: controller.shortcuts.toggleSettings
-                    placeholderText: 'SUPER + CTRL + SHIFT + O'
+                    value: controller.shortcuts.toggleSettings
+                    recorderWindow: window
                 }
-                Label { textFormat: Text.PlainText; text: 'Pause / resume input — keep keyboard visible' }
-                TextField {
+                Label { textFormat: Text.PlainText; text: 'Pause / resume input' }
+                ShortcutRecorder {
                     id: pauseShortcut
                     Layout.fillWidth: true; enabled: !controller.shortcutsBusy
-                    text: controller.shortcuts.pause
-                    placeholderText: 'SUPER + CTRL + SHIFT + P'
+                    value: controller.shortcuts.pause
+                    recorderWindow: window
                 }
                 Connections {
                     target: controller
                     function onShortcutsChanged() {
-                        overlayShortcut.text = controller.shortcuts.toggle
-                        settingsShortcut.text = controller.shortcuts.toggleSettings
-                        pauseShortcut.text = controller.shortcuts.pause
+                        overlayShortcut.value = controller.shortcuts.toggle
+                        settingsShortcut.value = controller.shortcuts.toggleSettings
+                        pauseShortcut.value = controller.shortcuts.pause
                     }
                 }
                 RowLayout {
                     Button {
                         text: controller.shortcutsBusy ? 'Applying…' : 'Apply shortcuts'
-                        enabled: !controller.shortcutsBusy
-                        onClicked: controller.manageShortcuts({toggle:overlayShortcut.text, toggleSettings:settingsShortcut.text, pause:pauseShortcut.text})
+                        enabled: !controller.shortcutsBusy && !overlayShortcut.recording && !settingsShortcut.recording && !pauseShortcut.recording
+                        onClicked: controller.manageShortcuts({toggle:overlayShortcut.value, toggleSettings:settingsShortcut.value, pause:pauseShortcut.value})
                     }
                     Button {
-                        text: 'Defaults'; enabled: !controller.shortcutsBusy
+                        text: 'Defaults'; enabled: !controller.shortcutsBusy && !overlayShortcut.recording && !settingsShortcut.recording && !pauseShortcut.recording
                         onClicked: {
-                            overlayShortcut.text = 'SUPER + CTRL + SHIFT + K'
-                            settingsShortcut.text = 'SUPER + CTRL + SHIFT + O'
-                            pauseShortcut.text = 'SUPER + CTRL + SHIFT + P'
+                            overlayShortcut.value = 'SUPER + CTRL + SHIFT + K'
+                            settingsShortcut.value = 'SUPER + CTRL + SHIFT + O'
+                            pauseShortcut.value = 'SUPER + CTRL + SHIFT + P'
                         }
                     }
                 }
                 Label {
                     textFormat: Text.PlainText; text: controller.shortcutMessage
                     visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
-                    color: controller.shortcutError ? '#b4637a' : controller.palette.foreground
+                    color: controller.shortcutError ? (controller.palette.red || '#b4637a') : controller.palette.foreground
                 }
                 RowLayout {
                     Layout.fillWidth: true
-                    Label { textFormat: Text.PlainText; text: controller.status; Layout.fillWidth: true }
+                    Item { Layout.fillWidth: true }
                     Button { text: 'Done'; onClicked: controller.settingsOpen = false }
                 }
             }

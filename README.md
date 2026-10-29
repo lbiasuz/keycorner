@@ -18,9 +18,12 @@ The keyboard icon in the bar provides:
 **Super + Ctrl + Shift + O** opens/closes the settings panel.
 **Super + Ctrl + Shift + P** pauses/resumes HID listening while keeping the keyboard visible.
 
-Edit all three in **Settings → Keyboard shortcuts**, then click **Apply shortcuts**.
-Use modifiers plus a key (for example `SUPER + CTRL + P`); leave a field blank to
-disable an action. **Defaults** fills the standard combinations; Apply saves them.
+Click a shortcut button in **Settings → Keyboard shortcuts**, press the desired
+combination, then click **Apply shortcuts**. Escape cancels recording; **Clear**
+disables the action. **Defaults** fills the standard combinations; Apply saves them.
+Recording temporarily inhibits compositor shortcuts only for the focused settings
+window, and ends on focus loss, cancellation or after 15 seconds. Letters, numbers,
+function keys, navigation keys and common punctuation with modifiers are supported.
 Conflicts and duplicate combinations are rejected. Failed reloads restore the
 previous file. These shortcuts are unavailable while the screen is locked.
 
@@ -47,9 +50,9 @@ Settings save automatically to `~/.config/omarchy/keycorner.json` and persist ac
 | Key size | 28–60 px |
 | Input | Show/hide, pause/resume |
 | Mouse | Click-through toggle |
-| Layout | Reference layer, conservative layer suggestions |
+| Layout | Preview layer, conservative layer suggestions |
 
-Omarchy's current palette is applied automatically. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
+Omarchy's current palette is applied automatically, including while HID capture is paused, hidden or disconnected. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
 
 ## Compatibility
 
@@ -164,3 +167,9 @@ Device permissions must be configured on each machine. No root access, input-gro
 See [publication checklist](docs/PUBLISHING.md), [changelog](CHANGELOG.md), and [contribution guide](CONTRIBUTING.md). No firmware images or personal layout snapshots are bundled.
 
 ## Resource use and security
+
+Recorder key-mapping checks (Qt 6):
+
+```bash
+QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/qml -o -,txt
+```
