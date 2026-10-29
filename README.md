@@ -14,7 +14,7 @@ The keyboard icon in the bar provides:
 - **Right-click:** open settings.
 - **Middle-click:** pause/resume input.
 
-The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding or pausing stops the input process. Click-through mode leaves the bar button and CLI available.
+The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process. Click-through mode leaves the bar button and CLI available.
 
 Settings save automatically to `~/.config/omarchy/keycorner.json` and persist across shell restarts and plugin updates. External edits reload automatically. Invalid settings keep the previous configuration and stop input access until repaired; the settings window displays the error.
 
@@ -117,7 +117,7 @@ At each input-process startup, the bridge downloads the actual physical layout a
 
 HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. A held mod-tap can emit a modifier without revealing its position. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
 
-Only this model's keyboard interfaces are opened. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. Keys typed in password fields are visible too; hiding or pausing stops input access. The overlay has no pressed-key text line, but still highlights keys.
+Only this model's keyboard interfaces are opened. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too. Automatic screen-lock pausing is not implemented; hide or pause before sensitive typing or locking.** The overlay has no pressed-key text line, but still highlights keys.
 
 Device permissions must be configured on each machine. No root access, input-group additions, firmware flashing, or keyboard remapping is performed. Other keyboard models, rotated KLE layouts and alternative HID descriptors need additional support.
 
@@ -138,3 +138,5 @@ Device permissions must be configured on each machine. No root access, input-gro
 ## Release preparation
 
 See [publication checklist](docs/PUBLISHING.md), [changelog](CHANGELOG.md), and [contribution guide](CONTRIBUTING.md). No firmware images or personal layout snapshots are bundled.
+
+## Resource use and security

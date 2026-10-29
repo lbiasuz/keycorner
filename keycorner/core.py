@@ -1,6 +1,7 @@
 """Read-only Vial transport and layout model. No third-party dependencies."""
 import json
 import lzma
+import math
 import os
 from pathlib import Path
 import select
@@ -26,6 +27,22 @@ def devices():
     return found
 
 
+MAX_DEFINITION_BYTES = 1024 * 1024
+
+
+def decode_definition(compressed):
+    decoder = lzma.LZMADecompressor(memlimit=32 * 1024 * 1024)
+    raw = decoder.decompress(compressed, max_length=MAX_DEFINITION_BYTES + 1)
+    if len(raw) > MAX_DEFINITION_BYTES or not decoder.eof:
+        raise ValueError('Keyboard definition exceeds size limit or is truncated')
+    if decoder.unused_data:
+        raise ValueError('Unexpected trailing compressed data')
+    definition = json.loads(raw)
+    if not isinstance(definition, dict):
+        raise ValueError('Keyboard definition must be an object')
+    return definition
+
+
 class Vial:
     def __init__(self, path):
         self.fd = os.open(path, os.O_RDWR | os.O_NONBLOCK)
@@ -35,9 +52,11 @@ class Vial:
 
     def query(self, payload):
         # Only these read commands are permitted by this client.
+        if not payload or len(payload) > 32:
+            raise ValueError('Invalid request size')
         if payload[0] not in (0x01, 0x11, 0x12, 0xFE):
             raise ValueError('Not a read command')
-        if payload[0] == 0xFE and payload[1] not in (0, 1, 2):
+        if payload[0] == 0xFE and (len(payload) < 2 or payload[1] not in (0, 1, 2)):
             raise ValueError('Not a read-only Vial command')
         os.write(self.fd, b'\0' + payload.ljust(32, b'\0'))
         if not select.select([self.fd], [], [], 1)[0]:
@@ -57,7 +76,7 @@ class Vial:
             raise ValueError('Invalid keyboard definition size')
         compressed = b''.join(self.query(struct.pack('<BBI', 254, 2, i))
                               for i in range((size + 31) // 32))[:size]
-        definition = json.loads(lzma.decompress(compressed, memlimit=32 * 1024 * 1024))
+        definition = decode_definition(compressed)
         layers = self.query(b'\x11')[1]
         rows, cols = (definition['matrix'][k] for k in ('rows', 'cols'))
         if not (1 <= layers <= 32 and 1 <= rows <= 32 and 1 <= cols <= 32):
@@ -88,7 +107,7 @@ def label(code, custom=()):
     if code in BASIC:
         return BASIC[code]
     if 0x7e00 <= code < 0x7e00 + len(custom):
-        return custom[code-0x7e00]['name']
+        return str(custom[code-0x7e00]['name'])[:64]
     if 0x4000 <= code <= 0x4fff:
         return f'{label(code & 255)}\nL{(code >> 8) & 15}'
     if 0x2000 <= code <= 0x3fff:
@@ -117,21 +136,45 @@ def usage(code):
 def geometry(definition):
     keys = []
     y = 0.0
-    for row in definition['layouts']['keymap']:
+    raw_layout = definition['layouts']['keymap']
+    if not isinstance(raw_layout, list) or len(raw_layout) > 128:
+        raise ValueError('Invalid physical layout')
+    for row in raw_layout:
         if not isinstance(row, list):
             continue
+        if len(row) > 256:
+            raise ValueError('Too many layout entries')
         x, w, h = 0.0, 1.0, 1.0
         for entry in row:
             if isinstance(entry, dict):
                 if any(k in entry for k in ('r','rx','ry')):
                     raise ValueError('Rotated KLE layouts are not supported yet')
+                for key in ('x', 'y', 'w', 'h'):
+                    value = entry.get(key, 0)
+                    if type(value) not in (int, float) or not math.isfinite(value) or abs(value) > 128:
+                        raise ValueError('Invalid key geometry')
                 x += entry.get('x',0); y += entry.get('y',0)
                 w, h = entry.get('w',w), entry.get('h',h)
             else:
+                if not isinstance(entry, str) or len(entry) > 256:
+                    raise ValueError('Invalid matrix position')
                 r,c = map(int, entry.split('\n')[0].split(','))
+                rows, cols = (definition['matrix'][key] for key in ('rows', 'cols'))
+                if not (0 <= r < rows and 0 <= c < cols):
+                    raise ValueError('Key is outside the declared matrix')
+                if not (0 < w <= 16 and 0 < h <= 16 and abs(x) <= 128 and abs(y) <= 128):
+                    raise ValueError('Invalid key bounds')
+                if len(keys) >= 1024:
+                    raise ValueError('Too many keys')
                 keys.append(dict(id=f'{r},{c}', row=r, col=c, x=x, y=y, w=w, h=h))
                 x += w; w = h = 1.0
         y += 1
+    if not keys:
+        raise ValueError('Keyboard layout is empty')
+    min_x = min(k['x'] for k in keys)
+    min_y = min(k['y'] for k in keys)
+    for key in keys:
+        key['x'] -= min_x; key['y'] -= min_y
     return keys
 
 

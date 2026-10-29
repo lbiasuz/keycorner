@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Block on keyboard/control events instead of polling while connected.
+- Update themes only when files change; suppress duplicate input state.
+- Treat device labels as plain text and bound layout decompression/geometry.
+- Remove unused human-readable key strings and disable bridge core dumps.
+- Stop capture when minimized; document unresolved screen-lock privacy risk.
+
 ## 0.3.1 — 2026-10-29
 
 Initial repository release candidate; private preparation, not yet published.

@@ -72,13 +72,12 @@ Item {
     readonly property color keySurface: color('lighter_background', '#f2e9e1')
     readonly property color translucentKey: Qt.rgba(keySurface.r, keySurface.g, keySurface.b, translucency)
     property string status: 'Connecting to Crosses 54…'
-    property string output: ''
     property bool connected: false
     readonly property int activeLayer: automatic && estimate >= 0 ? estimate : preview
     function color(name, fallback) { return palette[name] || fallback }
     function pause() {
         updateConfig({paused: !paused})
-        pressed = []; output = ''; estimate = -1
+        pressed = []; estimate = -1
         if (paused) status = 'Paused · input access stopped'
     }
     function consume(line) {
@@ -87,27 +86,37 @@ Item {
             if (msg.theme) palette = msg.theme
             if (msg.type === 'layout') {
                 layout = msg.layout; connected = true
+                if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
                 status = 'Live key output · layer telemetry unavailable'
             } else if (msg.type === 'state') {
-                pressed = msg.pressed; output = msg.output
+                pressed = msg.pressed
                 estimate = msg.estimate === null ? -1 : msg.estimate
             } else if (msg.type === 'error') {
-                status = msg.message; connected = false; pressed = []; output = ''; estimate = -1
+                status = msg.message; connected = false; pressed = []; estimate = -1
             }
         } catch (error) { status = 'Could not read keyboard state'; connected = false }
     }
-    readonly property bool captureEnabled: configReady && !configError && shown && !paused
+    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused
     onCaptureEnabledChanged: {
-        pressed = []; output = ''; estimate = -1
+        pressed = []; estimate = -1
         if (!captureEnabled) status = paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
     }
+    FileView {
+        path: (Quickshell.env('HOME') || '') + '/.local/state/omarchy/current/theme/colors.toml'
+        watchChanges: true
+        printErrors: false
+        onFileChanged: { reload(); if (bridge.running) bridge.write('theme\n') }
+    }
+    onAutomaticChanged: if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
     Process {
         id: bridge
         command: ['python', '-B', '-u', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://','')]
         running: root.captureEnabled && root.retryGeneration >= 0
+        stdinEnabled: true
+        onStarted: bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
         stdout: SplitParser { onRead: data => root.consume(data) }
         onExited: {
-            root.pressed = []; root.output = ''; root.estimate = -1; root.connected = false
+            root.pressed = []; root.estimate = -1; root.connected = false
             if (root.captureEnabled) { root.status = 'Bridge stopped · retrying'; retry.restart() }
         }
     }
@@ -180,12 +189,12 @@ Item {
                 }
                 Rectangle {
                     width: 25; height: 25; radius: 4; color: root.translucentKey
-                    Text { anchors.centerIn: parent; text: root.paused ? '▶' : 'Ⅱ'; color: root.palette.foreground; font.pixelSize: 10 }
+                    Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: root.paused ? '▶' : 'Ⅱ'; color: root.palette.foreground; font.pixelSize: 10 }
                     MouseArea { anchors.fill: parent; onClicked: root.pause() }
                 }
                 Rectangle {
                     width: 25; height: 25; radius: 4; color: root.translucentKey
-                    Text { anchors.centerIn: parent; text: '×'; color: root.palette.foreground; font.pixelSize: 17 }
+                    Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: '×'; color: root.palette.foreground; font.pixelSize: 17 }
                     MouseArea { anchors.fill: parent; onClicked: root.close() }
                 }
             }
@@ -197,7 +206,7 @@ Item {
                         required property int index
                         width: 28; height: 24; radius: 5
                         color: root.activeLayer === index ? root.palette.accent : root.translucentKey
-                        Text { anchors.centerIn: parent; text: 'L'+index; color: root.activeLayer === index ? root.palette.background : root.palette.foreground; font { family: 'monospace'; pixelSize: 11; bold: true } }
+                        Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: 'L'+index; color: root.activeLayer === index ? root.palette.background : root.palette.foreground; font { family: 'monospace'; pixelSize: 11; bold: true } }
                         MouseArea { anchors.fill: parent; onClicked: { root.updateConfig({previewLayer:index,suggestLayers:false}) } }
                     }
                 }
@@ -205,7 +214,7 @@ Item {
                     width: 25; height: 24; radius: 5
                     color: root.translucentKey
                     border.width: root.automatic ? 1 : 0; border.color: root.palette.accent
-                    Text { anchors.centerIn: parent; text: '≈'; color: root.palette.foreground; font.pixelSize: 10 }
+                    Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: '≈'; color: root.palette.foreground; font.pixelSize: 10 }
                     MouseArea { anchors.fill: parent; onClicked: root.updateConfig({suggestLayers:!root.automatic}) }
                 }
             }
@@ -224,7 +233,7 @@ Item {
                         color: down ? root.palette.accent : root.translucentKey
                         border.width: 1
                         border.color: down ? root.palette.accent : root.color('muted','#cecacd')
-                        Text {
+                        Text { textFormat: Text.PlainText;
                             anchors { fill: parent; margins: 2 }
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             text: modelData.labels[root.activeLayer] || '—'
@@ -235,7 +244,7 @@ Item {
                     }
                 }
             }
-            Text {
+            Text { textFormat: Text.PlainText;
                 anchors { right: parent.right; bottom: parent.bottom; margins: 4 }
                 text: '◢'; font.pixelSize: 17; color: root.palette.foreground; opacity: 0.65
                 MouseArea {

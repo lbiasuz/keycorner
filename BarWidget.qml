@@ -7,7 +7,7 @@ BarWidget {
     moduleName: 'lbiasuz.keycorner'
     implicitWidth: 30
     implicitHeight: barSize
-    Text {
+    Text { textFormat: Text.PlainText;
         anchors.centerIn: parent
         text: '󰌌'
         font.family: root.bar ? root.bar.fontFamily : 'monospace'
