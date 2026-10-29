@@ -180,3 +180,5 @@ Recorder key-mapping checks (Qt 6):
 ```bash
 QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/qml -o -,txt
 ```
+
+See the [dependency and deployment audit](docs/DEPENDENCIES.md) for runtime, default-Omarchy, build/test and device-permission requirements.
