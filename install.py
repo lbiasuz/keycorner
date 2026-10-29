@@ -77,8 +77,8 @@ def setup_shortcut(source, hypr_dir, validate):
     if include in old.decode():
         return
     binds = json.loads(subprocess.check_output(['hyprctl', '-j', 'binds'], text=True))
-    if any(b.get('modmask') == 69 and str(b.get('key', '')).upper() in ('K', 'O') for b in binds):
-        raise RuntimeError('Super+Ctrl+Shift+K or O is already bound; choose another shortcut before installing')
+    if any(b.get('modmask') == 69 and str(b.get('key', '')).upper() in ('K', 'O', 'P') for b in binds):
+        raise RuntimeError('Super+Ctrl+Shift+K, O or P is already bound; choose another shortcut before installing')
     if destination.exists():
         raise RuntimeError('Unmanaged keycorner-shortcuts.lua exists; include it manually')
     stamp = time.time_ns()

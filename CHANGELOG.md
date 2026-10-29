@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Configure all three shortcuts in settings with conflict checks and rollback.
+- Add Super+Ctrl+Shift+P to pause/resume HID input without hiding the keyboard.
+
 - Stop HID capture on Hyprland focus-clear events, including screen locking;
   require an unlocked-session check before resuming.
 - Add configurable Super+Ctrl+Shift+K privacy and Super+Ctrl+Shift+O settings shortcuts.

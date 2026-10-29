@@ -55,6 +55,39 @@ Item {
         onLoadFailed: { root.configError = 'Could not read settings; run the installer or repair keycorner.json'; root.configReady = true }
         onSaveFailed: { root.configError = 'Could not save settings' }
     }
+    property var shortcuts: ({toggle: '', toggleSettings: '', pause: ''})
+    property string shortcutMessage: ''
+    property bool shortcutError: false
+    readonly property bool shortcutsBusy: shortcutProcess.running
+    function manageShortcuts(values) {
+        if (shortcutProcess.running) return
+        shortcutMessage = ''
+        shortcutProcess.response = ''
+        shortcutProcess.applying = values !== undefined
+        shortcutProcess.command = ['python', '-B', Qt.resolvedUrl('keycorner/shortcuts.py').toString().replace('file://', '')]
+            .concat(values === undefined ? [] : ['apply', JSON.stringify(values)])
+        shortcutProcess.running = true
+    }
+    onSettingsOpenChanged: if (settingsOpen) manageShortcuts()
+    Process {
+        id: shortcutProcess
+        property string response: ''
+        property bool applying: false
+        stdout: StdioCollector { onStreamFinished: shortcutProcess.response = text }
+        onExited: (exitCode, exitStatus) => {
+            try {
+                const result = JSON.parse(response)
+                root.shortcutError = !result.ok
+                if (result.ok) {
+                    root.shortcuts = result.shortcuts
+                    root.shortcutMessage = applying ? 'Shortcuts applied' : ''
+                } else root.shortcutMessage = result.error
+            } catch (error) {
+                root.shortcutError = true
+                root.shortcutMessage = 'Could not update shortcuts'
+            }
+        }
+    }
     SettingsWindow { controller: root; visible: root.settingsOpen }
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
     property var palette: ({background: '#faf4ed', foreground: '#575279', accent: '#56949f', muted: '#cecacd', lighter_background: '#f2e9e1', dark_foreground: '#9893a5'})

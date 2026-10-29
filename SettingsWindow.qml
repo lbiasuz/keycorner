@@ -76,6 +76,61 @@ FloatingWindow {
                     text: 'Use the keyboard icon in the bar: click to show/hide, right-click for settings, middle-click to pause. Hiding stops input access.'
                     wrapMode: Text.WordWrap; Layout.fillWidth: true; opacity: 0.75
                 }
+                Label { textFormat: Text.PlainText; text: 'Keyboard shortcuts'; font.bold: true; font.pixelSize: 18 }
+                Label {
+                    textFormat: Text.PlainText
+                    text: 'Use modifiers + a key, such as SUPER + CTRL + P. Leave a field blank to disable its shortcut.'
+                    wrapMode: Text.WordWrap; Layout.fillWidth: true; opacity: 0.75
+                }
+                Label { textFormat: Text.PlainText; text: 'Show / hide keyboard and resume / pause input' }
+                TextField {
+                    id: overlayShortcut
+                    Layout.fillWidth: true; enabled: !controller.shortcutsBusy
+                    text: controller.shortcuts.toggle
+                    placeholderText: 'SUPER + CTRL + SHIFT + K'
+                }
+                Label { textFormat: Text.PlainText; text: 'Open / close settings' }
+                TextField {
+                    id: settingsShortcut
+                    Layout.fillWidth: true; enabled: !controller.shortcutsBusy
+                    text: controller.shortcuts.toggleSettings
+                    placeholderText: 'SUPER + CTRL + SHIFT + O'
+                }
+                Label { textFormat: Text.PlainText; text: 'Pause / resume input — keep keyboard visible' }
+                TextField {
+                    id: pauseShortcut
+                    Layout.fillWidth: true; enabled: !controller.shortcutsBusy
+                    text: controller.shortcuts.pause
+                    placeholderText: 'SUPER + CTRL + SHIFT + P'
+                }
+                Connections {
+                    target: controller
+                    function onShortcutsChanged() {
+                        overlayShortcut.text = controller.shortcuts.toggle
+                        settingsShortcut.text = controller.shortcuts.toggleSettings
+                        pauseShortcut.text = controller.shortcuts.pause
+                    }
+                }
+                RowLayout {
+                    Button {
+                        text: controller.shortcutsBusy ? 'Applying…' : 'Apply shortcuts'
+                        enabled: !controller.shortcutsBusy
+                        onClicked: controller.manageShortcuts({toggle:overlayShortcut.text, toggleSettings:settingsShortcut.text, pause:pauseShortcut.text})
+                    }
+                    Button {
+                        text: 'Defaults'; enabled: !controller.shortcutsBusy
+                        onClicked: {
+                            overlayShortcut.text = 'SUPER + CTRL + SHIFT + K'
+                            settingsShortcut.text = 'SUPER + CTRL + SHIFT + O'
+                            pauseShortcut.text = 'SUPER + CTRL + SHIFT + P'
+                        }
+                    }
+                }
+                Label {
+                    textFormat: Text.PlainText; text: controller.shortcutMessage
+                    visible: text.length > 0; wrapMode: Text.WordWrap; Layout.fillWidth: true
+                    color: controller.shortcutError ? '#b4637a' : controller.palette.foreground
+                }
                 RowLayout {
                     Layout.fillWidth: true
                     Label { textFormat: Text.PlainText; text: controller.status; Layout.fillWidth: true }

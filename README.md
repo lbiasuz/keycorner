@@ -15,9 +15,20 @@ The keyboard icon in the bar provides:
 - **Middle-click:** pause/resume input.
 
 **Super + Ctrl + Shift + K** hides/pauses or shows/resumes the keyboard overlay.
-**Super + Ctrl + Shift + O** opens/closes the settings panel. Customize these in
-`~/.config/hypr/keycorner-shortcuts.lua`; the installer preserves edits and rejects
-conflicting existing bindings. Neither shortcut runs on the lock screen.
+**Super + Ctrl + Shift + O** opens/closes the settings panel.
+**Super + Ctrl + Shift + P** pauses/resumes HID listening while keeping the keyboard visible.
+
+Edit all three in **Settings → Keyboard shortcuts**, then click **Apply shortcuts**.
+Use modifiers plus a key (for example `SUPER + CTRL + P`); leave a field blank to
+disable an action. **Defaults** fills the standard combinations; Apply saves them.
+Conflicts and duplicate combinations are rejected. Failed reloads restore the
+previous file. These shortcuts are unavailable while the screen is locked.
+
+Bindings live in `~/.config/hypr/keycorner-shortcuts.lua`, with the previous version
+saved as `.lua.backup`. Existing combinations are loaded into settings, including
+older installs with no pause shortcut; use Defaults or fill in that field to add it.
+Custom Lua beyond the standard binding lines is preserved and must be edited
+manually. The helper runs only when opening settings or applying changes.
 
 Capture also stops while Hyprland has no focused application (including empty
 workspaces and some launchers). Re-entry checks Omarchy's public lock status;
