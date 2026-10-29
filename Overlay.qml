@@ -98,6 +98,14 @@ Item {
     readonly property bool paused: config.paused
     readonly property bool shown: config.shown && !sessionClosed
     readonly property bool passthrough: config.clickThrough
+    readonly property bool positionLocked: config.positionLocked
+    function updatePointerPolicy() {
+        if (!panel.backingWindowVisible) return
+        // Hyprland hit-tests pinned floating windows by their bounding box.
+        // Exclude this window from that search as well as emptying its input mask.
+        Hyprland.dispatch('hl.dsp.window.set_prop({window="title:^Keycorner Overlay$",prop="no_focus",value="' + (passthrough ? 'true' : 'false') + '"})')
+    }
+    onPassthroughChanged: updatePointerPolicy()
     readonly property string corner: config.corner
     readonly property string monitor: config.monitor
     readonly property real unit: Math.min((panel.width - 32) / layout.width, (panel.height - 72) / layout.height)
@@ -139,6 +147,7 @@ Item {
         target: Hyprland
         function onRawEvent(event) {
             // activeToplevel can stay cached on lock: use the explicit IPC clear.
+            if (event.name === 'openwindow' && event.data.endsWith(',Keycorner Overlay')) root.updatePointerPolicy()
             if (event.name === 'activewindowv2') root.rawFocusBlocked = event.data.trim() === ''
         }
     }
@@ -244,7 +253,9 @@ Item {
         implicitHeight: root.layout.height * root.config.keySize + 72
         minimumSize: Qt.size(400, 200)
         color: 'transparent'
-        mask: Region { item: root.passthrough ? null : card }
+        // The input mask also protects against pointer delivery directly to Qt.
+        mask: Region { width: root.passthrough ? 0 : panel.width; height: root.passthrough ? 0 : panel.height }
+        onBackingWindowVisibleChanged: if (backingWindowVisible) Qt.callLater(root.updatePointerPolicy)
         Rectangle {
             id: card
             anchors.fill: parent
@@ -254,10 +265,12 @@ Item {
             border.width: 1
             MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.SizeAllCursor
-                onPressed: panel.startSystemMove()
+                enabled: !root.positionLocked && !root.passthrough
+                cursorShape: enabled ? Qt.SizeAllCursor : Qt.ArrowCursor
+                onPressed: if (!root.positionLocked) panel.startSystemMove()
             }
             Row {
+                opacity: root.passthrough ? 0.45 : 1
                 anchors { right: parent.right; rightMargin: 14; top: parent.top; topMargin: 9 }
                 spacing: 6
                 Rectangle {
@@ -291,6 +304,7 @@ Item {
                 }
             }
             Row {
+                opacity: root.passthrough ? 0.45 : 1
                 x: 16; y: 10; spacing: 4
                 Repeater {
                     model: root.layout.layers
@@ -338,12 +352,14 @@ Item {
             }
             Text { textFormat: Text.PlainText;
                 anchors { right: parent.right; bottom: parent.bottom; margins: 4 }
+                visible: !root.positionLocked && !root.passthrough
                 text: '◢'; font.pixelSize: 17; color: root.palette.foreground; opacity: 0.65
                 MouseArea {
                     anchors.fill: parent
                     anchors.margins: -5
                     cursorShape: Qt.SizeFDiagCursor
-                    onPressed: panel.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
+                    enabled: !root.positionLocked && !root.passthrough
+                    onPressed: if (!root.positionLocked) panel.startSystemResize(Qt.RightEdge | Qt.BottomEdge)
                 }
             }
         }

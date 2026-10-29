@@ -73,7 +73,8 @@ FloatingWindow {
                     }
                 }
                 Switch { text: 'Suggest layer'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
-                Switch { text: 'Click-through'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
+                Switch { text: 'Lock position'; checked: controller.config.positionLocked; onToggled: controller.updateConfig({positionLocked:checked}) }
+                Switch { text: 'Click through overlay'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
                 Label { textFormat: Text.PlainText; text: 'Keyboard shortcuts'; font.bold: true; font.pixelSize: 18 }
                 Label { textFormat: Text.PlainText; text: 'Show / hide keyboard' }
                 ShortcutRecorder {

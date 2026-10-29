@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a persistent position lock for overlay dragging and resizing.
+- Make full-window click-through explicit and clarify its settings label.
+
 - Record shortcut combinations with focused-window shortcut inhibition, cancel and clear.
 - Simplify settings labels and rename Reference layer to Preview layer.
 - Load Omarchy colors independently of HID capture, fixing stale settings themes.

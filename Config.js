@@ -1,7 +1,7 @@
 // Keep validation in one place for settings UI, IPC, and externally edited files.
 function defaults() {
     return {version: 1, shown: true, paused: false, corner: 'bottom-right', monitor: '',
-        keySize: 34, opacity: 0.78, margin: 18, topMargin: 48, clickThrough: false,
+        keySize: 34, opacity: 0.78, margin: 18, topMargin: 48, clickThrough: false, positionLocked: false,
         suggestLayers: true, previewLayer: 0, showOutput: true};
 }
 function normalize(input) {

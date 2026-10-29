@@ -39,7 +39,14 @@ failed or unknown checks leave capture off. Lock handling is event-driven, with
 no periodic polling. This is asynchronous privacy protection, not a security
 boundary against other software running as your user.
 
-The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process. Click-through mode leaves the bar button and CLI available.
+The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process.
+**Lock position** disables dragging from the keyboard/background and hides its
+resize grip; buttons remain usable. Hyprland's own window-management commands
+(such as Super-drag) remain available.
+**Click through overlay** passes all pointer input to windows underneath,
+including clicks over the overlay controls. It does not stop HID listening.
+Use the settings hotkey or right-click the bar icon to turn it off.
+Both switches persist across restarts and can be used independently.
 
 Settings save automatically to `~/.config/omarchy/keycorner.json` and persist across shell restarts and plugin updates. External edits reload automatically. Invalid settings keep the previous configuration and stop input access until repaired; the settings window displays the error.
 
@@ -49,7 +56,7 @@ Settings save automatically to `~/.config/omarchy/keycorner.json` and persist ac
 | Opacity | 15–100%; labels stay opaque |
 | Key size | 28–60 px |
 | Input | Show/hide, pause/resume |
-| Mouse | Click-through toggle |
+| Mouse | Lock position, click through overlay |
 | Layout | Preview layer, conservative layer suggestions |
 
 Omarchy's current palette is applied automatically, including while HID capture is paused, hidden or disconnected. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
