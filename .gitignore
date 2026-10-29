@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+preview.png
+# Local data and firmware must never enter a plugin release.
+*.uf2
+*.bin
+*.hex
+*.vil
+*.zip
+*.partial
+*.core
+.env
+.env.*
+keymap-snapshot.json
+vial-definition.json
+backup-status.json
+*-backup.json
+*-device-info.txt
+work/
+backups/
+dist/

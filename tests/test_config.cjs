@@ -1,0 +1,15 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('Config.js','utf8');
+const c = vm.createContext({}); vm.runInContext(source,c);
+assert.equal(c.normalize({}).opacity,.78);
+assert.equal(c.normalize({opacity:0}).opacity,.15);
+assert.equal(c.normalize({keySize:100}).keySize,60);
+assert.equal(c.normalize({previewLayer:2.8}).previewLayer,2);
+for (const bad of [null,[],{version:2},{shown:'true'},{opacity:NaN},{corner:'center'}]) {
+    assert.throws(() => c.normalize(bad));
+}
+const saved = c.normalize({opacity:.63,corner:'top-left',clickThrough:true});
+assert.equal(JSON.stringify(c.normalize(JSON.parse(JSON.stringify(saved)))),JSON.stringify(saved));
+console.log('Settings validation and persistence round-trip passed.');
