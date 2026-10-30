@@ -20,7 +20,7 @@ Item {
     property bool settingsOpen: false
     readonly property string configPath: (Quickshell.env('XDG_CONFIG_HOME') || Quickshell.env('HOME') + '/.config') + '/omarchy/keycorner.json'
     function loadConfig() {
-        try { config = Config.normalize(JSON.parse(configFile.text())); configError = ''; configReady = true }
+        try { config = Config.normalize(JSON.parse(configFile.text())); configError = ''; configReady = true; if (!config.deviceId) settingsOpen = true }
         catch (error) { configError = String(error); configReady = true }
     }
     function updateConfig(patch) {
@@ -93,13 +93,65 @@ Item {
     property string deviceMessage: ''
     property var permissionPlan: null
     readonly property var selectedKeyboard: keyboardDevices.find(d => d.id === config.deviceId) || null
-    readonly property bool deviceBusy: deviceAction.running
+    property bool setupPending: false
+    property bool bridgeAlive: false
+    readonly property bool deviceBusy: deviceAction.running || setupPending || keyboardSetup.running
+    readonly property var keyboardChoices: keyboardDevices.concat(Object.keys(config.keyboards).filter(id => !keyboardDevices.some(d => d.id === id)).map(id => ({id:id,name:config.keyboards[id].name,connection:'Disconnected'})))
+    readonly property var savedKeyboard: config.keyboards[config.deviceId] || null
+    readonly property bool profileMatchesSelection: !!savedKeyboard && savedKeyboard.backend === config.backend && savedKeyboard.standardLayout === config.standardLayout
+    function selectKeyboard(device) {
+        deviceMessage = ''
+        updateConfig(Config.selectKeyboard(config, device))
+    }
+    function forgetKeyboard() {
+        var profiles = Object.assign({}, config.keyboards)
+        delete profiles[config.deviceId]
+        updateConfig({keyboards:profiles,deviceId:'',backend:'standard'})
+        deviceMessage = ''
+    }
+    function setupKeyboard() {
+        if (deviceBusy || !selectedKeyboard || !sessionSafe) return
+        deviceMessage = 'Reading keyboard layout…'
+        keyboardSetup.signature = captureSignature
+        keyboardSetup.response = ''
+        keyboardSetup.command = Backend.command(Qt.resolvedUrl('.'), 'inspect', [config.deviceId,config.backend,config.standardLayout])
+        setupPending = true
+        setupDelay.restart()
+    }
+    Timer {
+        id: setupDelay; interval: 50
+        onTriggered: {
+            if (!root.sessionSafe || keyboardSetup.signature !== root.captureSignature) { root.setupPending = false; return }
+            if (root.bridgeAlive) { restart(); return }
+            keyboardSetup.running = true
+            root.setupPending = false
+        }
+    }
+    onSessionSafeChanged: if (!sessionSafe) {
+        setupDelay.stop(); setupPending = false; keyboardSetup.running = false
+    }
+    Process {
+        id: keyboardSetup
+        property string signature: ''
+        property string response: ''
+        stdout: StdioCollector { onStreamFinished: keyboardSetup.response = text }
+        onExited: (exitCode, exitStatus) => {
+            if (!root.sessionSafe || signature !== root.captureSignature) return
+            try {
+                const result = JSON.parse(response)
+                if (!result.ok || exitCode !== 0) { root.deviceMessage = result.error || 'Could not read keyboard'; return }
+                root.updateConfig({keyboards:Config.saveKeyboard(root.config,result)})
+                root.layout = result.layout
+                root.deviceMessage = 'Saved · ' + result.layout.keys.length + ' keys · ' + result.layout.layers + ' layers'
+            } catch (error) { root.deviceMessage = String(error) }
+        }
+    }
     function scanDevices() {
         if (deviceScan.running) return
         deviceScan.running = true
     }
     function devicePermission(action) {
-        if (deviceAction.running || !selectedKeyboard) return
+        if (deviceBusy || !selectedKeyboard) return
         const plan = permissionPlan
         const id = action === 'install' && plan ? plan.id : config.deviceId
         const mode = action === 'install' && plan ? plan.backend : config.backend
@@ -145,7 +197,7 @@ Item {
         }
     }
     readonly property string captureSignature: config.backend + ':' + config.deviceId + ':' + config.standardLayout
-    onCaptureSignatureChanged: { pressed = []; estimate = -1; layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
+    onCaptureSignatureChanged: { deviceMessage = ''; status = 'Connect and set up this keyboard in Settings'; pressed = []; estimate = -1; layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
     Timer { id: backendRestart; interval: 100; onTriggered: {} }
     SettingsWindow { controller: root; visible: root.settingsOpen }
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
@@ -272,10 +324,10 @@ Item {
         command: Backend.command(Qt.resolvedUrl('.'), 'bridge', ['--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : []))
         running: root.captureEnabled && root.retryGeneration >= 0
         stdinEnabled: true
-        onStarted: bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
+        onStarted: { root.bridgeAlive = true; bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n') }
         stdout: SplitParser { onRead: data => root.consume(data) }
         onExited: {
-            root.pressed = []; root.estimate = -1; root.connected = false
+            root.bridgeAlive = false; root.pressed = []; root.estimate = -1; root.connected = false
             if (root.captureEnabled) { root.status = 'Bridge stopped · retrying'; retry.restart() }
         }
     }
@@ -285,9 +337,10 @@ Item {
         function toggle(): void { root.toggle() }
         function pause(): void { root.pause() }
         function settings(): void { root.settingsOpen = true }
+        function setupKeyboard(): void { root.setupKeyboard() }
         function toggleSettings(): void { root.settingsOpen = !root.settingsOpen }
         function closeSettings(): void { root.settingsOpen = false }
-        function state(): string { return JSON.stringify({implementation:Backend.engine, config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, layers:root.layout.layers, keys:root.layout.keys.length}) }
+        function state(): string { return JSON.stringify({implementation:Backend.engine, config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, status:root.status, deviceMessage:root.deviceMessage, deviceBusy:root.deviceBusy, layers:root.layout.layers, keys:root.layout.keys.length}) }
         function configure(json: string): void {
             try { root.updateConfig(JSON.parse(json)) } catch (error) { console.warn('Invalid Keycorner settings') }
         }
@@ -383,6 +436,18 @@ Item {
                     Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: '≈'; color: root.palette.foreground; font.pixelSize: 10 }
                     MouseArea { anchors.fill: parent; onClicked: root.updateConfig({suggestLayers:!root.automatic}) }
                 }
+            }
+            Column {
+                visible: root.layout.keys.length === 0
+                anchors.centerIn: parent
+                width: Math.max(180, parent.width - 48)
+                spacing: 12
+                Text {
+                    textFormat: Text.PlainText; width: parent.width; wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter; color: root.palette.foreground
+                    text: root.configError || root.deviceMessage || root.status
+                }
+                Controls.Button { anchors.horizontalCenter: parent.horizontalCenter; text: 'Set up keyboard'; onClicked: root.settingsOpen = true }
             }
             Item {
                 x: (panel.width - width) / 2; y: 52 + (panel.height - 72 - height) / 2

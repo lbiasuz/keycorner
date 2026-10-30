@@ -1,4 +1,4 @@
-use crate::{Result, err, run, string};
+use crate::{Result, err, hid::Descriptor, run, string};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::{
@@ -123,15 +123,16 @@ pub fn discover() -> Result<Vec<Value>> {
     for g in groups.values_mut() {
         g.as_object_mut().unwrap().remove("_usb");
         let m = &g["match"];
-        let vial = m["vendor"] == "3034"
-            && m["product"] == "5659"
-            && m["serial"].as_str().unwrap_or("").contains("vial:");
+        let interfaces = interfaces(g)?;
+        let vial = interfaces.iter().any(|(_, d)| d.raw);
+        let keyboard_reports = interfaces.iter().any(|(_, d)| d.keyboard());
         let conn = m
             .get("usb_port")
             .or_else(|| m.get("phys"))
             .cloned()
             .unwrap_or(json!(""));
         g["vial"] = json!(vial);
+        g["keyboardReports"] = json!(keyboard_reports);
         g["connection"] = conn;
         g["standardAccessible"] = json!(
             g["events"]
@@ -140,9 +141,20 @@ pub fn discover() -> Result<Vec<Value>> {
                 .iter()
                 .all(|p| accessible(p, libc::R_OK))
         );
-        let raw = g["hidraw"].as_array().unwrap();
-        g["vialAccessible"] =
-            json!(!raw.is_empty() && raw.iter().all(|p| accessible(p, libc::R_OK | libc::W_OK)));
+        g["vialAccessible"] = json!(
+            vial && keyboard_reports
+                && interfaces
+                    .iter()
+                    .filter(|(_, d)| d.raw || d.readable())
+                    .all(|(p, d)| accessible(
+                        &json!(p),
+                        if d.raw {
+                            libc::R_OK | libc::W_OK
+                        } else {
+                            libc::R_OK
+                        }
+                    ))
+        );
     }
     Ok(groups.into_values().collect())
 }
@@ -155,26 +167,27 @@ pub fn select(id: &str) -> Result<Value> {
         .find(|d| d["id"] == id)
         .ok_or_else(|| "Selected keyboard disconnected; reconnect or choose a keyboard".into())
 }
-pub fn hid(device: &Value) -> Result<BTreeMap<String, String>> {
-    let mut out = BTreeMap::new();
+pub fn interfaces(device: &Value) -> Result<Vec<(String, Descriptor)>> {
+    let mut out = Vec::new();
     for node in device["hidraw"].as_array().ok_or("Missing interfaces")? {
         let n = string(node)?;
         let name = Path::new(n).file_name().ok_or("Invalid node")?;
-        let desc = fs::read(
-            Path::new("/sys/class/hidraw")
-                .join(name)
-                .join("device/report_descriptor"),
-        )?;
-        let kind = if desc.starts_with(&[6, 0x60, 0xff, 9, 0x61]) {
-            "vial"
-        } else if desc.starts_with(&[5, 1, 9, 6]) {
-            "boot"
-        } else if desc.windows(6).any(|w| w == [0x85, 6, 5, 7, 0x19, 0xe0]) {
-            "shared"
-        } else {
-            continue;
-        };
-        out.insert(kind.into(), n.into());
+        let path = Path::new("/sys/class/hidraw")
+            .join(name)
+            .join("device/report_descriptor");
+        // Unknown descriptors remain usable through Standard/evdev mode.
+        if let Ok(bytes) = fs::read(path)
+            && let Ok(desc) = Descriptor::parse(&bytes)
+        {
+            out.push((n.to_owned(), desc));
+        }
     }
     Ok(out)
+}
+pub fn vial_path(interfaces: &[(String, Descriptor)]) -> Result<&str> {
+    let raw: Vec<_> = interfaces.iter().filter(|(_, d)| d.raw).collect();
+    if raw.len() != 1 {
+        return err("Expected one Vial raw HID interface; choose Standard mode");
+    };
+    Ok(&raw[0].0)
 }

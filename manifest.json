@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "lbiasuz.keycorner",
   "name": "Keycorner",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "lbiasuz",
-  "description": "Translucent keyboard overlay with standard keyboard support, optional Crosses Vial layouts, and device-scoped access setup.",
+  "description": "Translucent keyboard overlay with standard keyboard support, capability-based Vial layouts and per-keyboard setup, and device-scoped access setup.",
   "kinds": [
     "overlay",
     "bar-widget"

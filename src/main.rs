@@ -1,5 +1,7 @@
 mod core;
 mod devices;
+mod hid;
+mod keycodes;
 mod permissions;
 mod setup;
 mod shortcuts;
@@ -129,6 +131,7 @@ fn theme() -> Value {
 fn dispatch(args: &[String]) -> Result<Value> {
     match args.first().map(String::as_str) {
         Some("theme") => Ok(json!({"theme":theme()})),
+        Some("inspect") => stream::inspect(&args[1..]),
         Some("devices") => Ok(json!({"ok":true,"devices":devices::discover()?})),
         Some("config-init") => {
             setup::config_init()?;
@@ -148,7 +151,7 @@ fn dispatch(args: &[String]) -> Result<Value> {
             json!({"name":"keycorner","version":env!("CARGO_PKG_VERSION"),"implementation":"rust"}),
         ),
         _ => err(
-            "Usage: keycorner bridge|theme|devices|config-init|shortcuts|permissions|install|--version",
+            "Usage: keycorner bridge|theme|devices|inspect|config-init|shortcuts|permissions|install|--version",
         ),
     }
 }

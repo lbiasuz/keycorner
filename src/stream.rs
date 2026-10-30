@@ -70,11 +70,19 @@ pub(crate) fn query(file: &mut File, payload: &[u8]) -> Result<[u8; 32]> {
 }
 fn snapshot(path: &str) -> Result<Value> {
     let mut file = open(path, true)?;
-    let identity = query(&mut file, &[254, 0])?;
-    if u32::from_le_bytes(identity[..4].try_into()?) > 6 {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+    let mut request = |payload: &[u8]| -> Result<[u8; 32]> {
+        if std::time::Instant::now() >= deadline {
+            return err("Keyboard layout read timed out; reconnect and retry");
+        }
+        query(&mut file, payload)
+    };
+    let identity = request(&[254, 0])?;
+    let protocol = u32::from_le_bytes(identity[..4].try_into()?);
+    if protocol > 6 {
         return err("Unsupported Vial protocol");
     };
-    let response = query(&mut file, &[254, 1])?;
+    let response = request(&[254, 1])?;
     let size = u32::from_le_bytes(response[..4].try_into()?) as usize;
     if size == 0 || size > 262144 {
         return err("Invalid keyboard definition size");
@@ -83,11 +91,11 @@ fn snapshot(path: &str) -> Result<Value> {
     for i in 0..size.div_ceil(32) {
         let mut p = vec![254, 2];
         p.extend((i as u32).to_le_bytes());
-        compressed.extend(query(&mut file, &p)?)
+        compressed.extend(request(&p)?)
     }
     compressed.truncate(size);
     let d = core::decode(&compressed)?;
-    let layers = query(&mut file, &[17])?[1] as usize;
+    let layers = request(&[17])?[1] as usize;
     let (rows, cols) = core::dimensions(&d)?;
     let total = layers * rows * cols * 2;
     if !(1..=32).contains(&layers) || total > 65535 {
@@ -97,7 +105,7 @@ fn snapshot(path: &str) -> Result<Value> {
     for offset in (0..total).step_by(28) {
         let count = (total - offset).min(28);
         let pos = (offset as u16).to_be_bytes();
-        let r = query(&mut file, &[18, pos[0], pos[1], count as u8])?;
+        let r = request(&[18, pos[0], pos[1], count as u8])?;
         raw.extend_from_slice(&r[4..4 + count]);
     }
     let codes: Vec<_> = raw
@@ -106,7 +114,8 @@ fn snapshot(path: &str) -> Result<Value> {
         .iter()
         .map(|c| u16::from_be_bytes([c[0], c[1]]))
         .collect();
-    let mut layout = core::model(&d, layers, &codes)?;
+    let mut layout = core::model_protocol(&d, layers, &codes, protocol)?;
+    layout["protocol"] = json!(protocol);
     layout["source"] = json!("vial");
     Ok(layout)
 }
@@ -172,7 +181,8 @@ impl Reader {
 }
 struct Input {
     file: File,
-    kind: String,
+    descriptor: Option<crate::hid::Descriptor>,
+    hid_state: crate::hid::State,
     reader: Reader,
     held: Keys,
 }
@@ -220,7 +230,8 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
             let held = key_state(file.as_raw_fd())?;
             inputs.push(Input {
                 file,
-                kind: "standard".into(),
+                descriptor: None,
+                hid_state: Default::default(),
                 reader: Reader {
                     held: held.clone(),
                     ..Default::default()
@@ -233,17 +244,17 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
         if device["vial"] != true {
             return err("Select Standard mode for this keyboard");
         };
-        let paths = devices::hid(&device)?;
-        let layout = snapshot(
-            paths
-                .get("vial")
-                .ok_or("Selected Vial keyboard disconnected")?,
-        )?;
-        for kind in ["boot", "shared"] {
-            if let Some(path) = paths.get(kind) {
+        let interfaces = devices::interfaces(&device)?;
+        if !interfaces.iter().any(|(_, d)| d.keyboard()) {
+            return err("Keyboard reports are unsupported; choose Standard mode");
+        }
+        let layout = snapshot(devices::vial_path(&interfaces)?)?;
+        for (path, descriptor) in interfaces {
+            if descriptor.readable() {
                 inputs.push(Input {
-                    file: open(path, false)?,
-                    kind: kind.into(),
+                    file: open(&path, false)?,
+                    descriptor: Some(descriptor),
+                    hid_state: Default::default(),
                     reader: Reader::default(),
                     held: Keys::new(),
                 });
@@ -259,7 +270,6 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
     let mut previous = Value::Null;
     let mut suggest = true;
     let mut control = Vec::new();
-    let (mut keyboard, mut media) = (Keys::new(), Keys::new());
     if backend == "standard" {
         let held: Keys = inputs.iter().flat_map(|i| i.held.iter().copied()).collect();
         previous = json!({"type":"state","pressed":held,"estimate":null});
@@ -303,7 +313,7 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
                 let size = if backend == "standard" {
                     data.len()
                 } else {
-                    64
+                    513
                 };
                 let n = match inputs[index].file.read(&mut data[..size]) {
                     Ok(0) => return err("Keyboard disconnected"),
@@ -324,21 +334,19 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
                             previous = message;
                         }
                     }
-                } else if let Some((group, codes)) = core::report(&data[..n], &inputs[index].kind) {
-                    let held = if group == "media" {
-                        &mut media
-                    } else {
-                        &mut keyboard
-                    };
-                    if *held != codes {
-                        *held = codes;
-                        changed = true;
+                } else {
+                    let input = &mut inputs[index];
+                    if let Some(descriptor) = &input.descriptor {
+                        changed |= input.hid_state.feed(descriptor, &data[..n]);
                     }
                 }
             }
         }
         if changed && backend != "standard" {
-            let held: Keys = keyboard.union(&media).copied().collect();
+            let held: Keys = inputs
+                .iter()
+                .flat_map(|input| input.hid_state.keys())
+                .collect();
             let estimate = if suggest {
                 core::infer(&layout, &held)
             } else {
@@ -384,4 +392,33 @@ pub fn main(args: &[String]) -> Result<()> {
             return Ok(());
         }
     }
+}
+
+/// Explicit setup probe: read metadata and validate access, never consume key events.
+pub fn inspect(args: &[String]) -> Result<Value> {
+    if args.len() != 3 {
+        return err("Usage: keycorner inspect DEVICE_ID standard|vial PRESET");
+    }
+    let device = devices::select(&args[0])?;
+    let layout = match args[1].as_str() {
+        "standard" => {
+            let layout = core::standard(&args[2])?;
+            if device["standardAccessible"] != true {
+                return err("Enable access for this keyboard first");
+            };
+            layout
+        }
+        "vial" => {
+            let interfaces = devices::interfaces(&device)?;
+            if !interfaces.iter().any(|(_, d)| d.keyboard()) {
+                return err("Keyboard reports are unsupported; choose Standard mode");
+            };
+            if device["vialAccessible"] != true {
+                return err("Enable access for this keyboard first");
+            };
+            snapshot(devices::vial_path(&interfaces)?)?
+        }
+        _ => return err("Invalid keyboard mode"),
+    };
+    Ok(json!({"ok":true,"deviceId":device["id"],"name":device["name"],"layout":layout}))
 }

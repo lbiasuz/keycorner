@@ -57,12 +57,6 @@ pub fn rule(d: &Value, backend: &str) -> Result<String> {
         }
     }
     let mut parts = if backend == "vial" {
-        if m["vendor"] != "3034"
-            || m["product"] != "5659"
-            || !m["serial"].as_str().unwrap_or("").contains("vial:")
-        {
-            return err("This Vial device is not supported yet; use Standard mode");
-        };
         vec![
             "SUBSYSTEM==\"hidraw\"".to_owned(),
             "KERNEL==\"hidraw*\"".into(),
@@ -163,6 +157,9 @@ pub fn command(args: &[String]) -> Result<Value> {
         "hidraw"
     }]
     .clone();
+    if backend == "vial" && d["vial"] != true {
+        return err("No compatible raw HID interface; choose Standard mode");
+    }
     let content = rule(&d, backend)?;
     let dest = destination(&d, backend)?;
     if action == "preview" {

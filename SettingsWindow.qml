@@ -59,23 +59,24 @@ FloatingWindow {
                 spacing: 12
                 Label { textFormat: Text.PlainText; text: 'Keycorner'; font.pixelSize: 24; font.bold: true }
                 Label { textFormat: Text.PlainText; text: controller.configError; visible: text.length > 0; color: controller.palette.red || '#b4637a'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
-                Label { textFormat: Text.PlainText; text: 'Keyboard' }
+                Label { textFormat: Text.PlainText; text: 'Keyboard setup' }
                 RowLayout {
                     ComboBox {
-                        Layout.fillWidth: true
-                        model: ['Select a keyboard'].concat(controller.keyboardDevices.map(d => d.name + ' · ' + d.connection))
-                        currentIndex: Math.max(0, controller.keyboardDevices.findIndex(d => d.id === controller.config.deviceId) + 1)
+                        Layout.fillWidth: true; enabled: !controller.deviceBusy
+                        model: ['Select a keyboard'].concat(controller.keyboardChoices.map(d => d.name + ' · ' + d.connection + (controller.config.keyboards[d.id] ? ' · Saved' : '')))
+                        currentIndex: Math.max(0, controller.keyboardChoices.findIndex(d => d.id === controller.config.deviceId) + 1)
                         onActivated: if (currentIndex > 0) {
-                            const device = controller.keyboardDevices[currentIndex-1]
-                            controller.updateConfig({deviceId:device.id, backend:device.vial ? 'vial' : 'standard'})
+                            const device = controller.keyboardChoices[currentIndex-1]
+                            controller.selectKeyboard(device)
                         }
                     }
                     Button { text: 'Refresh'; onClicked: controller.scanDevices() }
                 }
                 RowLayout {
                     ComboBox {
-                        Layout.fillWidth: true; model: ['Standard', 'Vial layout']
-                        currentIndex: controller.config.backend === 'vial' ? 1 : 0
+                        Layout.fillWidth: true; enabled: !controller.deviceBusy
+                        model: controller.selectedKeyboard && controller.selectedKeyboard.vial ? ['Standard', 'Vial layout'] : ['Standard']
+                        currentIndex: controller.config.backend === 'vial' && model.length > 1 ? 1 : 0
                         onActivated: controller.updateConfig({backend:currentIndex === 1 ? 'vial' : 'standard'})
                     }
                     Button {
@@ -84,17 +85,30 @@ FloatingWindow {
                     }
                 }
                 ComboBox {
-                    visible: controller.config.backend === 'standard'; Layout.fillWidth: true
+                    visible: controller.config.backend === 'standard'; Layout.fillWidth: true; enabled: !controller.deviceBusy
                     model: ['US ANSI 104', 'US ANSI TKL', 'US ANSI 60%']
                     property var presets: ['ansi104','ansi87','ansi60']
                     currentIndex: presets.indexOf(controller.config.standardLayout)
                     onActivated: controller.updateConfig({standardLayout:presets[currentIndex]})
                 }
+                RowLayout {
+                    Button {
+                        text: controller.savedKeyboard ? 'Read layout & save' : 'Add keyboard'
+                        enabled: !!controller.selectedKeyboard && !controller.deviceBusy && controller.sessionSafe
+                        onClicked: controller.setupKeyboard()
+                    }
+                    Button { text: 'Forget'; visible: !!controller.savedKeyboard; enabled: !controller.deviceBusy; onClicked: controller.forgetKeyboard() }
+                }
                 Label {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     text: controller.deviceMessage || (!controller.selectedKeyboard ? 'Keyboard not selected or disconnected' :
                         controller.config.backend === 'vial' && !controller.selectedKeyboard.vial ? 'Use Standard mode for this keyboard' :
-                        (controller.config.backend === 'standard' ? controller.selectedKeyboard.standardAccessible : controller.selectedKeyboard.vialAccessible) ? 'Access ready' : 'Keyboard access required')
+                        (controller.config.backend === 'standard' ? controller.selectedKeyboard.standardAccessible : controller.selectedKeyboard.vialAccessible) ? (controller.savedKeyboard ? (controller.profileMatchesSelection ? 'Saved · ' + controller.savedKeyboard.keys + ' keys · ' + controller.savedKeyboard.layers + ' layers' : 'Unsaved changes') : 'Ready to add keyboard') : 'Enable access, then add keyboard')
+                }
+                Label {
+                    textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
+                    visible: controller.captureEnabled && !controller.connected
+                    text: controller.status
                 }
                 RowLayout {
                     Switch { text: 'Show overlay'; checked: controller.config.shown; onToggled: controller.updateConfig({shown:checked}) }

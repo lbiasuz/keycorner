@@ -4,7 +4,7 @@
 
 **Private release preparation · MIT · Omarchy 4 / Hyprland Lua**
 
-A configurable, translucent overlay for **standard Linux keyboards**, with optional exact Vial layouts for the **Crosses 54 Rev2** (`3034:5659`). Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo branch replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
+A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo branch replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
 
 ## Use
 
@@ -73,9 +73,13 @@ one keyboard in Settings and choose a US ANSI full-size, TKL or 60% preset.
 These are US QWERTY label presets; automatic XKB labels and ISO/ABNT2/custom
 physical layouts are not implemented. Broader physical-keyboard coverage remains a release requirement.
 
-**Vial layout mode remains specific to Crosses 54 Rev2** (`3034:5659`). Other
-QMK/Vial boards can use Standard mode, but generic Vial layout/report support and
-exact live layer telemetry are not claimed. See [keyboard selection and access](docs/KEYBOARD_ACCESS.md).
+**Vial layout mode uses capabilities, not a vendor/product allowlist.** Setup finds
+a compatible raw HID interface, verifies the Vial response, and reads the physical
+layout and keymaps. Keyboard and consumer input reports are decoded from their
+HID descriptors, including report IDs. Unsupported protocols, rotated layouts and
+unsupported report fields produce a setup error; Standard mode remains available.
+QMK/VIA alone does not imply Vial layout discovery. Exact layer telemetry still
+needs firmware support. See [keyboard setup](docs/KEYBOARD_ACCESS.md).
 
 ## Install / update
 
@@ -107,10 +111,17 @@ If Omarchy retains cached QML, use `omarchy restart shell` after saving your wor
 Enabled plugins start with Omarchy; visibility and pause settings govern capture.
 The current dragged position and resized dimensions are session-only.
 
-Select the keyboard in Settings. If necessary, **Enable access** previews and
+In **Settings → Keyboard setup**, select a connected keyboard and mode, then click
+**Add keyboard**. Vial reads its own layout; Standard uses your selected ANSI preset.
+Successful setup saves a separate profile for that keyboard. Selecting a saved
+keyboard restores its mode and preset; **Read layout & save** updates it and
+**Forget** removes only its profile. Disconnected saved keyboards stay listed.
+A first install opens Settings, and an empty overlay shows its error/setup action.
+
+If necessary, **Enable access** previews and
 installs a device-specific Keycorner udev rule after administrator authentication.
 Vial Desktop is not required. Standard mode reads keyboard event interfaces;
-Vial mode uses the supported board's hidraw interfaces. The normal plugin
+Vial mode uses the selected board's compatible hidraw interfaces. The normal plugin
 installer does not alter device permissions. Capture stops during access setup.
 See [keyboard access and rule removal](docs/KEYBOARD_ACCESS.md).
 
@@ -152,15 +163,15 @@ All configuration changes persist. Native IPC uses `omarchy-shell keycorner <met
 
 ## Keyboard behavior and limits
 
-In Vial mode, at each input-process startup, the bridge downloads the actual physical layout and all seven keymaps. It highlights standard HID key output, modifiers, and common media keys, including the board's NKRO reports. Dual-role labels show tap and hold functions. Disconnects clear highlights and trigger reconnection. Pause and resume after remapping in Vial; close Vial first to avoid competing raw-HID transactions.
+In Vial mode, at each input-process startup, the bridge downloads the actual physical layout and available keymaps. It highlights standard HID key output, modifiers, and common media keys, including the board's NKRO reports. Dual-role labels show tap and hold functions using the keyboard’s reported Vial protocol, including legacy home-row modifiers. Disconnects clear highlights and trigger reconnection. Pause and resume after remapping in Vial; close Vial first to avoid competing raw-HID transactions.
 
 **The current firmware does not report its active layer.** Layer chips select a saved layout. The `≈` button enables conservative layer suggestions, not firmware-reported state. Suggestions return to the reference preview when that evidence disappears. Silent layer switches, tap-toggle timing, automatic mouse layers, combos, and the complete stack of transparent layers cannot be reliably inferred. Exact live layers and physical-switch telemetry remain a future firmware integration, as requested.
 
 HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. A held mod-tap can emit a modifier without revealing its position. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
 
-Only the selected keyboard's interfaces are opened (legacy Crosses configurations retain automatic discovery until selection). The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too: use Super + Ctrl + Shift + K before sensitive typing. Screen locking automatically stops capture; unlocking resumes it if it was enabled.** The overlay has no pressed-key text line, but still highlights keys.
+Only the selected keyboard's interfaces are opened. Legacy Vial configurations with no selection can adopt a single compatible device. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too: use Super + Ctrl + Shift + K before sensitive typing. Screen locking automatically stops capture; unlocking resumes it if it was enabled.** The overlay has no pressed-key text line, but still highlights keys.
 
-Device permissions must be configured on each machine. The runtime stays unprivileged. Optional permission setup authenticates separately; no input-group additions, firmware flashing, or keyboard remapping is performed. Other keyboard models, rotated KLE layouts and alternative HID descriptors need additional support.
+Device permissions must be configured on each machine. The runtime stays unprivileged. Optional permission setup authenticates separately; no input-group additions, firmware flashing, or keyboard remapping is performed. Rotated KLE layouts and HID fields outside the supported keyboard/consumer formats need additional support.
 
 ## Development
 

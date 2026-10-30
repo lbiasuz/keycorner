@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — Keyboard setup
+
+- Remove vendor/product restrictions from the Rust Vial runtime and device-scoped rules.
+- Decode keyboard/consumer input from HID descriptors rather than fixed report IDs.
+- Decode key labels and tap outputs using the reported Vial protocol; fix legacy home-row modifiers and layer-toggle labels.
+- Add/read/save/forget per-keyboard profiles in Settings, with first-run setup and empty-overlay error feedback.
+- Read and validate Vial layouts through a one-shot setup probe while capture is stopped.
+
 ## 0.4.0 — Rust comparison branch
 
 - One Cargo-built executable replaces Python input, theme, device, shortcut, permission and installation helpers.

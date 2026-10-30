@@ -211,3 +211,168 @@ fn transport_rejects_writes_before_touching_device() {
         assert_eq!(error.to_string(), "Not a read-only Vial command");
     }
 }
+fn descriptor(hex: &str) -> crate::hid::Descriptor {
+    let bytes: Vec<_> = (0..hex.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+        .collect();
+    crate::hid::Descriptor::parse(&bytes).unwrap()
+}
+#[test]
+fn descriptor_keyboard_reports_match_reference() {
+    // Standard HID boot descriptor; no product or vendor identity participates.
+    let boot = descriptor(
+        "05010906a101050719e029e7150025019508750181029501750881010507190029ff150026ff00950675088100c0",
+    );
+    let shared = descriptor(
+        "05010906a1018506050719e029e7150025019508750181020507190029ef1500250195f075018102c0050c0901a101850419012aa002150126a002950175108100c0",
+    );
+    assert!(boot.keyboard());
+    assert!(shared.keyboard());
+    assert!(!boot.raw);
+    for case in fixture()["reports"].as_array().unwrap() {
+        let data: Vec<_> = case["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_u64().unwrap() as u8)
+            .collect();
+        let desc = if case["kind"] == "boot" {
+            &boot
+        } else {
+            &shared
+        };
+        let parsed = desc.decode(&data);
+        let actual = parsed
+            .first()
+            .map(|(group, keys)| json!([group, keys]))
+            .unwrap_or(Value::Null);
+        assert_eq!(actual, case["expected"]);
+    }
+}
+#[test]
+fn descriptor_dynamic_ids_padding_and_raw_transport() {
+    let numbered =
+        descriptor("05010906a1018521050719e029e795087501810295017508810195067508190029ff8100c0");
+    assert_eq!(
+        numbered.decode(&[33, 2, 0, 4, 5, 0, 0, 0, 0]),
+        vec![("keyboard", Keys::from([225, 4, 5]))]
+    );
+    assert!(numbered.decode(&[6, 2, 0, 4, 5, 0, 0, 0, 0]).is_empty());
+    let consumer = descriptor("050c0901a10185379501751019012aff028100c0");
+    assert_eq!(
+        consumer.decode(&[55, 0xe9, 0]),
+        vec![("media", Keys::from([169]))]
+    );
+    assert!(!consumer.keyboard());
+    let raw = descriptor("0660ff0961a1010962150026ff009520750881020963150026ff00952075089102c0");
+    assert!(raw.raw);
+    assert!(!raw.readable());
+    assert!(raw.decode(&[0; 32]).is_empty());
+    let fake = descriptor("0600ff0961a1019520750881029102c0");
+    assert!(!fake.raw);
+    let padded = descriptor("05010906a101950375018101050719e029e7950875018102950575018101c0");
+    assert_eq!(
+        padded.decode(&[0x10, 0]),
+        vec![("keyboard", Keys::from([225]))]
+    );
+}
+#[test]
+fn malformed_hid_descriptors_fail_safely() {
+    for bytes in [
+        vec![0xfe],
+        vec![0x76, 1],
+        vec![0xc0],
+        vec![0xb4],
+        vec![0x85, 0],
+        vec![0xa1, 1],
+        vec![0x75, 32, 0x96, 255, 255, 0x81, 0],
+    ] {
+        assert!(crate::hid::Descriptor::parse(&bytes).is_err(), "{bytes:?}");
+    }
+    let unknown = descriptor("05010906a1010507190029ff750595018100c0");
+    assert!(!unknown.keyboard());
+    assert!(unknown.decode(&[1]).is_empty());
+}
+#[test]
+fn permission_rules_accept_other_usb_keyboards_without_widening_scope() {
+    let mut device = fixture()["device"].clone();
+    device["match"]["vendor"] = json!("1234");
+    device["match"]["product"] = json!("abcd");
+    device["match"]["serial"] = json!("");
+    let rule = permissions::rule(&device, "vial").unwrap();
+    assert!(rule.contains("ATTRS{idVendor}==\"1234\""));
+    assert!(rule.contains("ATTRS{idProduct}==\"abcd\""));
+    assert!(rule.contains("KERNELS==\"1-6\""));
+    assert!(rule.contains("TAG+=\"uaccess\""));
+    assert!(!rule.contains("MODE="));
+    assert!(!rule.contains("GROUP="));
+}
+#[test]
+fn separate_keyboard_reports_preserve_each_others_state() {
+    let desc = descriptor("05010906a1018521050719e029e7950875018102852295067508190029ff8100c0");
+    let mut held = crate::hid::State::default();
+    assert!(held.feed(&desc, &[33, 2]));
+    assert!(held.feed(&desc, &[34, 4, 0, 0, 0, 0, 0]));
+    assert_eq!(held.keys().collect::<Keys>(), Keys::from([225, 4]));
+    assert!(!held.feed(&desc, &[34, 4, 0, 0, 0, 0, 0]));
+    assert!(held.feed(&desc, &[34, 0, 0, 0, 0, 0, 0]));
+    assert_eq!(held.keys().collect::<Keys>(), Keys::from([225]));
+    assert!(held.feed(&desc, &[33, 0]));
+    assert!(held.keys().next().is_none());
+}
+#[test]
+fn vial_protocol_versions_decode_home_row_mods_and_layers() {
+    for (legacy, modern, key, hold) in [
+        (0x6804, 0x2804, 4, "Super"),
+        (0x6416, 0x2416, 22, "Alt"),
+        (0x7207, 0x3207, 7, "RShift"),
+        (0x7109, 0x3109, 9, "RCtrl"),
+    ] {
+        for (code, protocol) in [(legacy, 5), (modern, 6)] {
+            assert_eq!(
+                keycodes::label(code, &Value::Null, protocol),
+                format!("{}\n{hold}", core::label(key, &Value::Null))
+            );
+            assert_eq!(keycodes::usage(code, protocol), Some(key));
+        }
+        assert_eq!(keycodes::usage(legacy, 6), None);
+        assert_eq!(keycodes::usage(modern, 5), None);
+    }
+    for (code, proto, expected) in [
+        (0x5102, 5, "MO 2"),
+        (0x5804, 5, "TT 4"),
+        (0x5802, 5, "TT 2"),
+        (0x5801, 5, "TT 1"),
+        (0x5222, 6, "MO 2"),
+        (0x52c4, 6, "TT 4"),
+        (0x5202, 5, "DF 2"),
+        (0x5202, 6, "TO 2"),
+    ] {
+        assert_eq!(keycodes::label(code, &Value::Null, proto), expected);
+        assert_eq!(keycodes::usage(code, proto), None);
+    }
+    assert_eq!(keycodes::label(0x7833, &Value::Null, 5), ";\nRSuper");
+    assert_eq!(keycodes::label(70, &Value::Null, 5), "PrtSc");
+}
+#[test]
+fn protocol_model_uses_tap_outputs_and_custom_names() {
+    let d = json!({"name":"Synthetic legacy board","matrix":{"rows":1,"cols":4},"layouts":{"keymap":[["0,0","0,1","0,2","0,3"]]}});
+    let model = core::model_protocol(&d, 1, &[0x6804, 0x6416, 0x7207, 0x7109], 5).unwrap();
+    assert_eq!(
+        model["keys"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|k| k["usages"][0].as_u64().unwrap())
+            .collect::<Vec<_>>(),
+        [4, 22, 7, 9]
+    );
+    let custom =
+        json!([{"name":"CUSTOM_ACTION","shortName":"Action","title":"Action description"}]);
+    for (code, protocol) in [(0x5f80, 5), (0x7e00, 6)] {
+        assert_eq!(keycodes::label(code, &custom, protocol), "Action");
+        assert_eq!(keycodes::usage(code, protocol), None);
+    }
+    assert_eq!(keycodes::label(0x5f81, &custom, 5), "User 1");
+}

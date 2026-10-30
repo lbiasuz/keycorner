@@ -113,7 +113,14 @@ pub fn dimensions(d: &Value) -> Result<(usize, usize)> {
     };
     Ok((rows, cols))
 }
+#[cfg(test)]
 pub fn model(d: &Value, layers: usize, codes: &[u16]) -> Result<Value> {
+    model_inner(d, layers, codes, None)
+}
+pub fn model_protocol(d: &Value, layers: usize, codes: &[u16], protocol: u32) -> Result<Value> {
+    model_inner(d, layers, codes, Some(protocol))
+}
+fn model_inner(d: &Value, layers: usize, codes: &[u16], protocol: Option<u32>) -> Result<Value> {
     let (rows, cols) = dimensions(d)?;
     if !(1..=32).contains(&layers)
         || layers * rows * cols * 2 > 65535
@@ -177,7 +184,7 @@ pub fn model(d: &Value, layers: usize, codes: &[u16]) -> Result<Value> {
                     .iter()
                     .map(|v| if *v == 1 { values[0] } else { *v })
                     .collect();
-                keys.push(json!({"id":format!("{r},{c}"),"row":r,"col":c,"x":x,"y":y,"w":w,"h":h,"labels":effective.iter().map(|v|label(*v,&d["customKeycodes"])).collect::<Vec<_>>(),"usages":effective.iter().map(|v|usage(*v)).collect::<Vec<_>>(),"codes":values}));
+                keys.push(json!({"id":format!("{r},{c}"),"row":r,"col":c,"x":x,"y":y,"w":w,"h":h,"labels":effective.iter().map(|v|protocol.map(|p|crate::keycodes::label(*v,&d["customKeycodes"],p)).unwrap_or_else(||label(*v,&d["customKeycodes"]))).collect::<Vec<_>>(),"usages":effective.iter().map(|v|protocol.map(|p|crate::keycodes::usage(*v,p)).unwrap_or_else(||usage(*v))).collect::<Vec<_>>(),"codes":values}));
                 x += w;
                 w = 1.;
                 h = 1.;
@@ -207,6 +214,7 @@ pub fn model(d: &Value, layers: usize, codes: &[u16]) -> Result<Value> {
         json!({"name":string(&d["name"] )?,"layers":layers,"keys":keys,"width":width,"height":height}),
     )
 }
+#[cfg(test)]
 pub fn report(data: &[u8], kind: &str) -> Option<(&'static str, Keys)> {
     let mut keys = Keys::new();
     let mods = if kind == "boot" && data.len() == 8 {
