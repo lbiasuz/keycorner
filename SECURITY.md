@@ -19,3 +19,13 @@ code already running as your desktop user.
 See [the resource and security review](docs/SECURITY_AND_PERFORMANCE.md) for the
 measured behavior, fixes and remaining limitations. Please never include personal
 keystrokes, credentials, firmware backups or live desktop captures in a bug report.
+
+Standard mode opens only the selected keyboard's Linux event nodes read-only;
+Vial mode opens only the selected supported keyboard's HID interfaces. Device
+selection persists, and switching backends terminates the previous reader.
+The optional Enable access action previews a narrowly scoped udev rule and uses
+administrator authentication for a one-time installation. It creates no privileged
+daemon or permanent authorization policy. Capture stops before that preview and
+authentication. Session ACLs grant access to the desktop user, not exclusively to
+Keycorner; existing broader Vial rules are not removed. See
+[keyboard access](docs/KEYBOARD_ACCESS.md) for scope and cleanup details.

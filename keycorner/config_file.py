@@ -12,7 +12,7 @@ def ensure_config(path):
     except FileExistsError:
         return False
     with os.fdopen(fd, 'w') as stream:
-        json.dump({'version': 1}, stream)
+        json.dump({'version': 1, 'backend': 'standard'}, stream)
         stream.write('\n')
     return True
 

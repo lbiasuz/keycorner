@@ -4,7 +4,7 @@
   "name": "Keycorner",
   "version": "0.3.1",
   "author": "lbiasuz",
-  "description": "Translucent Crosses 54 keyboard overlay with persistent settings, live key output and layer previews.",
+  "description": "Translucent keyboard overlay with standard keyboard support, optional Crosses Vial layouts, and device-scoped access setup.",
   "kinds": [
     "overlay",
     "bar-widget"

@@ -12,6 +12,26 @@ FloatingWindow {
     minimumSize: Qt.size(460, 500)
     color: controller.palette.background
     onVisibleChanged: if (!visible) controller.settingsOpen = false
+    Dialog {
+        id: permissionDialog
+        anchors.centerIn: parent
+        width: Math.min(460, window.width - 32)
+        modal: true; title: 'Enable keyboard access'
+        palette.windowText: controller.palette.foreground
+        palette.text: controller.palette.foreground
+        palette.buttonText: controller.palette.foreground
+        palette.button: controller.palette.lighter_background
+        background: Rectangle { color: controller.palette.lighter_background; border.color: controller.palette.muted; radius: 6 }
+        visible: controller.permissionPlan !== null
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onAccepted: controller.devicePermission('install')
+        onRejected: controller.permissionPlan = null
+        contentItem: ColumnLayout {
+            Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap; text: 'Grant the active local session access to ' + (controller.permissionPlan ? controller.permissionPlan.name : '') + '. Administrator authentication is required.' }
+            Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; text: controller.permissionPlan ? controller.permissionPlan.path : '' }
+            Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere; font.family: 'monospace'; font.pixelSize: 10; text: controller.permissionPlan ? controller.permissionPlan.rule : '' }
+        }
+    }
     Pane {
         anchors.fill: parent
         padding: 24
@@ -39,6 +59,43 @@ FloatingWindow {
                 spacing: 12
                 Label { textFormat: Text.PlainText; text: 'Keycorner'; font.pixelSize: 24; font.bold: true }
                 Label { textFormat: Text.PlainText; text: controller.configError; visible: text.length > 0; color: controller.palette.red || '#b4637a'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                Label { textFormat: Text.PlainText; text: 'Keyboard' }
+                RowLayout {
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: ['Select a keyboard'].concat(controller.keyboardDevices.map(d => d.name + ' · ' + d.connection))
+                        currentIndex: Math.max(0, controller.keyboardDevices.findIndex(d => d.id === controller.config.deviceId) + 1)
+                        onActivated: if (currentIndex > 0) {
+                            const device = controller.keyboardDevices[currentIndex-1]
+                            controller.updateConfig({deviceId:device.id, backend:device.vial ? 'vial' : 'standard'})
+                        }
+                    }
+                    Button { text: 'Refresh'; onClicked: controller.scanDevices() }
+                }
+                RowLayout {
+                    ComboBox {
+                        Layout.fillWidth: true; model: ['Standard', 'Vial layout']
+                        currentIndex: controller.config.backend === 'vial' ? 1 : 0
+                        onActivated: controller.updateConfig({backend:currentIndex === 1 ? 'vial' : 'standard'})
+                    }
+                    Button {
+                        text: 'Enable access'; enabled: !!controller.selectedKeyboard && !controller.deviceBusy
+                        onClicked: controller.devicePermission('preview')
+                    }
+                }
+                ComboBox {
+                    visible: controller.config.backend === 'standard'; Layout.fillWidth: true
+                    model: ['US ANSI 104', 'US ANSI TKL', 'US ANSI 60%']
+                    property var presets: ['ansi104','ansi87','ansi60']
+                    currentIndex: presets.indexOf(controller.config.standardLayout)
+                    onActivated: controller.updateConfig({standardLayout:presets[currentIndex]})
+                }
+                Label {
+                    textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
+                    text: controller.deviceMessage || (!controller.selectedKeyboard ? 'Keyboard not selected or disconnected' :
+                        controller.config.backend === 'vial' && !controller.selectedKeyboard.vial ? 'Use Standard mode for this keyboard' :
+                        (controller.config.backend === 'standard' ? controller.selectedKeyboard.standardAccessible : controller.selectedKeyboard.vialAccessible) ? 'Access ready' : 'Keyboard access required')
+                }
                 RowLayout {
                     Switch { text: 'Show overlay'; checked: controller.config.shown; onToggled: controller.updateConfig({shown:checked}) }
                     Switch { text: 'Pause input'; checked: controller.config.paused; onToggled: controller.updateConfig({paused:checked}) }
@@ -65,14 +122,15 @@ FloatingWindow {
                         value: controller.config.keySize
                         onMoved: controller.updateConfig({keySize:value})
                     }
-                    Label { textFormat: Text.PlainText; text: 'Preview layer' }
+                    Label { textFormat: Text.PlainText; text: 'Preview layer'; visible: controller.config.backend === 'vial' }
                     SpinBox {
+                        visible: controller.config.backend === 'vial'
                         from: 0; to: Math.max(0,controller.layout.layers-1)
                         value: controller.preview
                         onValueModified: controller.updateConfig({previewLayer:value})
                     }
                 }
-                Switch { text: 'Suggest layer'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
+                Switch { visible: controller.config.backend === 'vial'; text: 'Suggest layer'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
                 Switch { text: 'Lock position'; checked: controller.config.positionLocked; onToggled: controller.updateConfig({positionLocked:checked}) }
                 Switch { text: 'Click through overlay'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
                 Label { textFormat: Text.PlainText; text: 'Keyboard shortcuts'; font.bold: true; font.pixelSize: 18 }

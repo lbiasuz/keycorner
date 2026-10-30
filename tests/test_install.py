@@ -14,7 +14,7 @@ class InstallTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp)/'omarchy/keycorner.json'
             self.assertTrue(ensure_config(path))
-            self.assertEqual(json.loads(path.read_text()), {'version': 1})
+            self.assertEqual(json.loads(path.read_text()), {'version': 1, 'backend': 'standard'})
             path.write_text('broken user configuration')
             self.assertFalse(ensure_config(path))
             self.assertEqual(path.read_text(), 'broken user configuration')

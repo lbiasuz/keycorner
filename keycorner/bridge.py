@@ -1,4 +1,5 @@
 """Event-driven keyboard state stream. No typing log, network or periodic polling."""
+import argparse
 import json
 import lzma
 import os
@@ -7,7 +8,9 @@ import resource
 import select
 import sys
 import tomllib
-from core import devices, Vial, model, parse_report, infer_layer
+from core import Vial, model, parse_report, infer_layer
+from keyboard_devices import select as selected_device, selected_hid, discover
+from standard import Reader, EVENT, layout as standard_layout
 
 
 def theme():
@@ -33,7 +36,7 @@ def state_message(layout, held, suggestions=True):
                 estimate=infer_layer(layout, pressed) if suggestions else None)
 
 
-def main():
+def main(device_id=None, backend='vial', preset='ansi104'):
     # Keyboard state must not be saved in a Python core dump on failure.
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     control_fd = sys.stdin.fileno()
@@ -41,22 +44,47 @@ def main():
     while True:
         fds = {}
         try:
-            paths = devices()
-            if 'vial' not in paths:
-                raise OSError('Crosses 54 disconnected · reconnect to resume')
-            vial = Vial(paths['vial'])
-            try: layout = model(vial.snapshot())
-            finally: vial.close()
-            for kind in ('boot','shared'):
-                if kind in paths:
-                    fds[os.open(paths[kind], os.O_RDONLY | os.O_NONBLOCK)] = kind
+            readers = {}
+            device = selected_device(device_id) if device_id else None
+            if backend == 'standard':
+                if device is None: raise ValueError('Select a keyboard in Settings')
+                layout = standard_layout(preset)
+                for node in device['events']:
+                    fd = os.open(node, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+                    fds[fd] = 'standard'
+                    st = os.fstat(fd)
+                    if [st.st_dev, st.st_ino, st.st_rdev] != device['eventIdentity'][node]:
+                        raise OSError('Keyboard changed during connection; retrying')
+                    readers[fd] = Reader(fd)
+                held = {fd: set(reader.held) for fd, reader in readers.items()}
+            else:
+                # Migrate legacy Crosses selection only when it is unambiguous.
+                if device is None:
+                    supported = [d for d in discover() if d['vial']]
+                    if len(supported) != 1: raise ValueError('Select a keyboard in Settings')
+                    device = supported[0]
+                if not device['vial']:
+                    raise ValueError('Select Standard mode for this keyboard')
+                paths = selected_hid(device)
+                if 'vial' not in paths:
+                    raise OSError('Selected Vial keyboard disconnected')
+                vial = Vial(paths['vial'])
+                try: layout = model(vial.snapshot())
+                finally: vial.close()
+                layout['source'] = 'vial'
+                for kind in ('boot','shared'):
+                    if kind in paths:
+                        fds[os.open(paths[kind], os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)] = kind
+                held = {'keyboard':set(), 'media':set()}
             if not fds: raise OSError('No keyboard input interface available')
             current_theme = theme()
             emit(dict(type='layout', layout=layout, theme=current_theme))
-            held = {'keyboard':set(), 'media':set()}
             previous = None
             suggestions = True
             control_buffer = b''
+            if backend == 'standard':
+                previous = dict(type='state', pressed=sorted(set().union(*held.values())), estimate=None)
+                emit(previous)
             while True:
                 ready,_,_ = select.select([*fds, control_fd], [], [])
                 changed = False
@@ -79,15 +107,21 @@ def main():
                     if fd == control_fd: continue
                     # Bound each batch so a noisy device cannot starve control messages.
                     for _ in range(256):
-                        try: report = os.read(fd,64)
+                        try: report = os.read(fd, EVENT.size * 64 if backend == 'standard' else 64)
                         except BlockingIOError: break
                         if not report: raise OSError('Keyboard disconnected')
+                        if backend == 'standard':
+                            for state in readers[fd].feed(report):
+                                held[fd] = state
+                                message = dict(type='state', pressed=sorted(set().union(*held.values())), estimate=None)
+                                if message != previous: emit(message); previous = message
+                            continue
                         parsed = parse_report(report, fds[fd])
                         if parsed:
                             group, codes = parsed
                             if held[group] != codes:
                                 held[group] = codes; changed = True
-                if changed:
+                if changed and backend != 'standard':
                     message = state_message(layout, held, suggestions)
                     if message != previous:
                         emit(message); previous = message
@@ -104,5 +138,11 @@ def main():
 if __name__ == '__main__':
     try:
         if sys.argv[1:] == ['--theme-only']: emit(dict(theme=theme()))
-        else: main()
+        else:
+            parser = argparse.ArgumentParser()
+            parser.add_argument('--device')
+            parser.add_argument('--backend', choices=['vial','standard'], default='vial')
+            parser.add_argument('--preset', choices=['ansi104','ansi87','ansi60'], default='ansi104')
+            args = parser.parse_args()
+            main(args.device, args.backend, args.preset)
     except (KeyboardInterrupt, BrokenPipeError): sys.exit(0)

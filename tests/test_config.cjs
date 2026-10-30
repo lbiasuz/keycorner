@@ -17,3 +17,8 @@ console.log('Settings validation and persistence round-trip passed.');
 assert.equal(c.normalize({}).positionLocked, false);
 assert.equal(c.normalize({positionLocked:true,clickThrough:false}).positionLocked, true);
 assert.equal(c.normalize({positionLocked:false,clickThrough:true}).positionLocked, false);
+
+assert.equal(c.defaults().backend, 'standard');
+assert.equal(c.normalize({version:1}).backend, 'vial');
+assert.equal(c.normalize({backend:'standard',deviceId:'a'.repeat(24)}).backend,'standard');
+for (const value of [{backend:'bad'},{deviceId:'../event0'},{standardLayout:'bad'}]) assert.throws(() => c.normalize(value));

@@ -9,7 +9,7 @@ No marketplace submission or public release has been created.
 - Automated Python tests, settings tests and source compilation run in GitHub Actions.
 - The installed Omarchy validator accepts the manifest.
 - Installation documents required setup, scoped USB permissions and removal.
-- Device support is intentionally limited to Crosses 54 Rev2.
+- Standard keyboard mode and optional Crosses Vial layout support are included.
 - Firmware backups, personal keymaps and desktop screenshots are excluded.
 
 ## Before publishing
@@ -18,8 +18,9 @@ No marketplace submission or public release has been created.
    do not replace a real Wayland, Hyprland and USB smoke test.
 2. Test hide/show, pause/resume, reconnect, settings persistence, dragging, resizing,
    click-through recovery via the bar, and removal. Confirm the shell stays alive.
-3. Test the second keyboard before claiming generic support. Discovery, embedded
-   geometry, keycode version and HID descriptors all need validation per device.
+3. Test standard mode on a second physical keyboard and test the permission
+   workflow on a fresh user account. Generic Vial layout/report support is not
+   claimed; that still needs per-device validation.
 4. If a preview is desired, capture the plugin against a clean background with a
    synthetic/demo layout. The private desktop screenshot is not a release asset.
 5. Confirm CI is green and the version in `manifest.json` matches the changelog.
@@ -39,4 +40,4 @@ Proposed listing:
 - Tags: keyboard, overlay, vial
 - Summary: A movable, translucent Crosses 54 Rev2 keyboard reference for Omarchy,
   with live key highlights, layer previews and persistent settings.
-- Limitations: exact layer telemetry and arbitrary keyboard support are not included.
+- Limitations: exact layer telemetry, non-US layout presets, and generic Vial layouts are not included.

@@ -68,7 +68,7 @@ Item {
             .concat(values === undefined ? [] : ['apply', JSON.stringify(values)])
         shortcutProcess.running = true
     }
-    onSettingsOpenChanged: if (settingsOpen) manageShortcuts()
+    onSettingsOpenChanged: { if (settingsOpen) { manageShortcuts(); scanDevices() } else permissionPlan = null }
     Process {
         id: shortcutProcess
         property string response: ''
@@ -88,13 +88,71 @@ Item {
             }
         }
     }
+    property var keyboardDevices: []
+    property string deviceMessage: ''
+    property var permissionPlan: null
+    readonly property var selectedKeyboard: keyboardDevices.find(d => d.id === config.deviceId) || null
+    readonly property bool deviceBusy: deviceAction.running
+    function scanDevices() {
+        if (deviceScan.running) return
+        deviceScan.running = true
+    }
+    function devicePermission(action) {
+        if (deviceAction.running || !selectedKeyboard) return
+        const plan = permissionPlan
+        const id = action === 'install' && plan ? plan.id : config.deviceId
+        const mode = action === 'install' && plan ? plan.backend : config.backend
+        permissionPlan = null
+        deviceMessage = ''
+        deviceAction.action = action; deviceAction.deviceId = id; deviceAction.mode = mode
+        deviceAction.response = ''
+        deviceAction.command = ['python','-B',Qt.resolvedUrl('keycorner/permissions.py').toString().replace('file://',''),action,id,mode]
+        deviceAction.running = true
+    }
+    Process {
+        id: deviceScan
+        command: ['python','-B',Qt.resolvedUrl('keycorner/keyboard_devices.py').toString().replace('file://','')]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const result = JSON.parse(text)
+                    if (!result.ok) { root.deviceMessage = result.error; return }
+                    root.keyboardDevices = result.devices
+                    if (!root.config.deviceId && root.config.backend === 'vial') {
+                        const supported = result.devices.filter(d => d.vial)
+                        if (supported.length === 1) root.updateConfig({deviceId:supported[0].id})
+                    }
+                } catch (error) { root.deviceMessage = 'Could not list keyboards' }
+            }
+        }
+    }
+    Process {
+        id: deviceAction
+        property string action: ''
+        property string deviceId: ''
+        property string mode: ''
+        property string response: ''
+        stdout: StdioCollector { onStreamFinished: deviceAction.response = text }
+        onExited: {
+            try {
+                const result = JSON.parse(response)
+                if (!result.ok) root.deviceMessage = result.error
+                else if (action === 'preview') root.permissionPlan = {id:deviceId, backend:mode, rule:result.rule, path:result.path, name:result.device}
+                else root.deviceMessage = result.message
+            } catch (error) { root.deviceMessage = 'Keyboard access setup failed' }
+            root.scanDevices()
+        }
+    }
+    readonly property string captureSignature: config.backend + ':' + config.deviceId + ':' + config.standardLayout
+    onCaptureSignatureChanged: { pressed = []; estimate = -1; layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
+    Timer { id: backendRestart; interval: 100; onTriggered: {} }
     SettingsWindow { controller: root; visible: root.settingsOpen }
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
     property var palette: ({background: '#faf4ed', foreground: '#575279', accent: '#56949f', muted: '#cecacd', lighter_background: '#f2e9e1', dark_foreground: '#9893a5'})
     property var pressed: []
     readonly property int preview: Math.min(config.previewLayer, Math.max(0, layout.layers-1))
     property int estimate: -1
-    readonly property bool automatic: config.suggestLayers
+    readonly property bool automatic: config.backend === 'vial' && config.suggestLayers
     readonly property bool paused: config.paused
     readonly property bool shown: config.shown && !sessionClosed
     readonly property bool passthrough: config.clickThrough
@@ -113,7 +171,7 @@ Item {
     readonly property color surface: color('background', '#faf4ed')
     readonly property color keySurface: color('lighter_background', '#f2e9e1')
     readonly property color translucentKey: Qt.rgba(keySurface.r, keySurface.g, keySurface.b, translucency)
-    property string status: 'Connecting to Crosses 54…'
+    property string status: 'Select a keyboard in Settings'
     property bool connected: false
     readonly property int activeLayer: automatic && estimate >= 0 ? estimate : preview
     function color(name, fallback) { return palette[name] || fallback }
@@ -129,7 +187,7 @@ Item {
             if (msg.type === 'layout') {
                 layout = msg.layout; connected = true
                 if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
-                status = 'Live key output · layer telemetry unavailable'
+                status = msg.layout.source === 'standard' ? 'Standard keyboard connected' : 'Vial keyboard connected'
             } else if (msg.type === 'state') {
                 pressed = msg.pressed
                 estimate = msg.estimate === null ? -1 : msg.estimate
@@ -178,7 +236,7 @@ Item {
         }
     }
     readonly property bool sessionSafe: applicationFocused && unlockedConfirmed
-    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe
+    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe && !deviceBusy && !permissionPlan && !backendRestart.running && (config.deviceId !== '' || config.backend === 'vial')
     onCaptureEnabledChanged: {
         pressed = []; estimate = -1
         if (!captureEnabled) status = !sessionSafe ? 'Session protected · input access stopped' : paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
@@ -210,7 +268,7 @@ Item {
     onAutomaticChanged: if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
     Process {
         id: bridge
-        command: ['python', '-B', '-u', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://','')]
+        command: ['python', '-B', '-u', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://',''), '--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : [])
         running: root.captureEnabled && root.retryGeneration >= 0
         stdinEnabled: true
         onStarted: bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
@@ -304,6 +362,7 @@ Item {
                 }
             }
             Row {
+                visible: root.config.backend === 'vial'
                 opacity: root.passthrough ? 0.45 : 1
                 x: 16; y: 10; spacing: 4
                 Repeater {

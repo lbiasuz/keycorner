@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add a read-only evdev backend for standard keyboards with ANSI 104/TKL/60% presets.
+- Select one physical keyboard; keep Crosses Vial layout support optional.
+- Bundle scoped udev setup with rule preview, administrator authentication and capture shutdown.
+- Handle partial input events, repeat events, reconnects and SYN_DROPPED resynchronization.
+
 - Add a persistent position lock for overlay dragging and resizing.
 - Make full-window click-through explicit and clarify its settings label.
 
