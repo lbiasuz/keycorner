@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — Rust comparison branch
+
+- One Cargo-built executable replaces Python input, theme, device, shortcut, permission and installation helpers.
+- Shared QML interface and install-time Python/Rust comparison switch.
+- Python source remains available as a reference; firmware is unchanged.
+
 ## Unreleased
 
 - Add a read-only evdev backend for standard keyboards with ANSI 104/TKL/60% presets.

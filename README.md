@@ -4,7 +4,7 @@
 
 **Private release preparation · MIT · Omarchy 4 / Hyprland Lua**
 
-A configurable, translucent overlay for **standard Linux keyboards**, with optional exact Vial layouts for the **Crosses 54 Rev2** (`3034:5659`). Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The read-only Python bridge needs no third-party packages.
+A configurable, translucent overlay for **standard Linux keyboards**, with optional exact Vial layouts for the **Crosses 54 Rev2** (`3034:5659`). Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo branch replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
 
 ## Use
 
@@ -64,7 +64,9 @@ Omarchy's current palette is applied automatically, including while HID capture 
 ## Compatibility
 
 Targets x86_64 Omarchy Linux.
-Python 3.11+ is required (`tomllib`). Node.js is needed only for development tests.
+Rust mode requires libc, libgcc_s and liblzma; it does not require Python. Building
+from source needs Rust/Cargo 1.88+, a C toolchain, pkg-config and liblzma development
+files. Python 3.11+ and Node.js are reference/test dependencies only.
 
 **Standard mode supports ordinary Linux keyboards without Vial or QMK.** Select
 one keyboard in Settings and choose a US ANSI full-size, TKL or 60% preset.
@@ -81,9 +83,11 @@ This repository is currently private; only authorized GitHub accounts can clone 
 The same URL can be used for public installation after publication.
 
 ```sh
-omarchy plugin add https://github.com/lbiasuz/keycorner.git
-python ~/.config/omarchy/plugins/lbiasuz.keycorner/install.py --setup-only
-omarchy plugin enable lbiasuz.keycorner
+git clone --branch rust-backend https://github.com/lbiasuz/keycorner.git
+cd keycorner
+./keycorner.sh install
+# Only if Omarchy retains the previous QML in its cache:
+omarchy restart shell
 ```
 
 Setup creates missing settings and installs narrow floating-window rules in
@@ -92,11 +96,13 @@ original file, validates the configuration and rolls back its edits if validatio
 fails. Existing settings and customized rules are preserved. No root access is
 needed by the plugin or installer.
 
-For development from a separate source checkout, use `python install.py` to copy
-the runtime to the user plugin directory and enable it. The installer also works
-from an existing plugin checkout without copying files onto themselves.
+`./keycorner.sh install` builds with Cargo, copies the native runtime into the
+plugin directory and enables it. `install.py` is retained as historical Python
+reference; do not use it to install this branch. A packaged build can use the same
+shell installer without Cargo. See [Rust architecture and comparison](docs/RUST.md).
 
-For git-installed plugins, update with `omarchy plugin update lbiasuz.keycorner`.
+For this source-built branch, pull changes and rerun `./keycorner.sh install`.
+A Git-only plugin update does not rebuild the native executable.
 If Omarchy retains cached QML, use `omarchy restart shell` after saving your work.
 Enabled plugins start with Omarchy; visibility and pause settings govern capture.
 The current dragged position and resized dimensions are session-only.
@@ -154,7 +160,7 @@ HID reports output keycodes rather than physical switches. Duplicate mappings ma
 
 Only the selected keyboard's interfaces are opened (legacy Crosses configurations retain automatic discovery until selection). The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too: use Super + Ctrl + Shift + K before sensitive typing. Screen locking automatically stops capture; unlocking resumes it if it was enabled.** The overlay has no pressed-key text line, but still highlights keys.
 
-Device permissions must be configured on each machine. No root access, input-group additions, firmware flashing, or keyboard remapping is performed. Other keyboard models, rotated KLE layouts and alternative HID descriptors need additional support.
+Device permissions must be configured on each machine. The runtime stays unprivileged. Optional permission setup authenticates separately; no input-group additions, firmware flashing, or keyboard remapping is performed. Other keyboard models, rotated KLE layouts and alternative HID descriptors need additional support.
 
 ## Development
 
@@ -163,14 +169,16 @@ Device permissions must be configured on each machine. No root access, input-gro
 - `SettingsWindow.qml`: settings controls.
 - `BarWidget.qml`: bar access.
 - `Config.js`: shared configuration validation/defaults.
-- `keycorner/keyboard_devices.py`: scoped discovery and stable device selection.
-- `keycorner/standard.py`: evdev decoding and US ANSI layout presets.
-- `keycorner/permissions.py`: permission preview and one-time authenticated setup.
-- `keycorner/core.py`: read-only Vial transport, KLE, key labels, HID decoding and layer estimates.
-- `keycorner/bridge.py`: transient input stream, reconnect and palette reading.
-- `install.py`: repeatable installation preserving settings.
-- `tests/`: HID parsing, read-only command guard, layout/inference and configuration validation tests. Tests require Node.js in addition to Python.
+- `Backend.js`: native/Python command routing for comparison installs.
+- `src/devices.rs`: scoped discovery and stable device selection.
+- `src/core.rs`, `data/`: layouts, labels, reports and layer suggestions.
+- `src/stream.rs`: Vial read queries, evdev decoding and blocking input loop.
+- `src/permissions.rs`: permission preview and authenticated setup.
+- `src/shortcuts.rs`, `src/setup.rs`: shortcut and installation helpers.
+- `keycorner/`, `install.py`: unchanged Python reference implementation.
+- `tests/`: native tests, synthetic Python parity fixtures and UI/config tests.
 
+Run `./keycorner.sh build` to populate the local `bin/keycorner` first.
 `shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
 
 ## Release preparation

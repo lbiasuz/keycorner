@@ -4,6 +4,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick.Controls as Controls
 import "Config.js" as Config
+import "Backend.js" as Backend
 
 Item {
     id: root
@@ -38,7 +39,7 @@ Item {
     function dismiss() { close() }
     function toggle() { const next = !shown || paused; sessionClosed = false; updateConfig({shown: next, paused: !next}) }
     Process {
-        command: ['python', '-B', Qt.resolvedUrl('keycorner/config_file.py').toString().replace('file://','')]
+        command: Backend.command(Qt.resolvedUrl('.'), 'config-init')
         running: true
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) root.settingsInitialized = true
@@ -64,7 +65,7 @@ Item {
         shortcutMessage = ''
         shortcutProcess.response = ''
         shortcutProcess.applying = values !== undefined
-        shortcutProcess.command = ['python', '-B', Qt.resolvedUrl('keycorner/shortcuts.py').toString().replace('file://', '')]
+        shortcutProcess.command = Backend.command(Qt.resolvedUrl('.'), 'shortcuts')
             .concat(values === undefined ? [] : ['apply', JSON.stringify(values)])
         shortcutProcess.running = true
     }
@@ -106,12 +107,12 @@ Item {
         deviceMessage = ''
         deviceAction.action = action; deviceAction.deviceId = id; deviceAction.mode = mode
         deviceAction.response = ''
-        deviceAction.command = ['python','-B',Qt.resolvedUrl('keycorner/permissions.py').toString().replace('file://',''),action,id,mode]
+        deviceAction.command = Backend.command(Qt.resolvedUrl('.'), 'permissions', [action,id,mode])
         deviceAction.running = true
     }
     Process {
         id: deviceScan
-        command: ['python','-B',Qt.resolvedUrl('keycorner/keyboard_devices.py').toString().replace('file://','')]
+        command: Backend.command(Qt.resolvedUrl('.'), 'devices')
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -257,7 +258,7 @@ Item {
     }
     Process {
         id: themeReader
-        command: ['python', '-B', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://',''), '--theme-only']
+        command: Backend.command(Qt.resolvedUrl('.'), 'theme')
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.palette = JSON.parse(text).theme } catch (error) {}
@@ -268,7 +269,7 @@ Item {
     onAutomaticChanged: if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
     Process {
         id: bridge
-        command: ['python', '-B', '-u', Qt.resolvedUrl('keycorner/bridge.py').toString().replace('file://',''), '--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : [])
+        command: Backend.command(Qt.resolvedUrl('.'), 'bridge', ['--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : []))
         running: root.captureEnabled && root.retryGeneration >= 0
         stdinEnabled: true
         onStarted: bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
@@ -286,7 +287,7 @@ Item {
         function settings(): void { root.settingsOpen = true }
         function toggleSettings(): void { root.settingsOpen = !root.settingsOpen }
         function closeSettings(): void { root.settingsOpen = false }
-        function state(): string { return JSON.stringify({config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, layers:root.layout.layers, keys:root.layout.keys.length}) }
+        function state(): string { return JSON.stringify({implementation:Backend.engine, config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, layers:root.layout.layers, keys:root.layout.keys.length}) }
         function configure(json: string): void {
             try { root.updateConfig(JSON.parse(json)) } catch (error) { console.warn('Invalid Keycorner settings') }
         }

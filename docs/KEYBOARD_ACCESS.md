@@ -2,7 +2,7 @@
 
 Keycorner now separates ordinary keyboard input from Vial layout discovery.
 Vial Desktop, QMK build tools and Vial firmware are not prerequisites for
-Standard mode. No additional Python packages are required.
+Standard mode. The Rust runtime does not require Python.
 
 ## Choose a keyboard
 
@@ -71,9 +71,9 @@ or other software remain unchanged; adding a narrow rule does not narrow them.
 The preview/setup helper can also be used from the source checkout:
 
 ```sh
-python keycorner/keyboard_devices.py
-python keycorner/permissions.py preview DEVICE_ID standard
-python keycorner/permissions.py install DEVICE_ID standard
+target/release/keycorner devices
+target/release/keycorner permissions preview DEVICE_ID standard
+target/release/keycorner permissions install DEVICE_ID standard
 ```
 
 Use `vial` instead of `standard` only for the supported Vial path. `install`
@@ -93,7 +93,9 @@ cleanup. Existing Vial-provided permissions may still grant access independently
 The standard path was exercised against real Crosses evdev nodes without opening
 any hidraw descriptor or making a Vial query. Switching back restored all 54 keys
 and 7 Vial layers. Pause terminated the reader; resume created a new connection.
-Permission installation was exercised through pkexec, and the generated standard
+The original Python permission installation was exercised through pkexec; the Rust
+port was checked with identical rule previews and validation but did not reinstall
+existing system rules. The generated standard
 and Vial rules passed `udevadm verify`. Synthetic event tests cover partial records,
 repeat suppression, releases and overrun resynchronization. A separate physical
 ordinary keyboard and Bluetooth/ISO/ABNT2 hardware have not yet been tested here.

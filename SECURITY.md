@@ -12,7 +12,7 @@ security boundary. Manually hide/pause first when immediate shutdown matters.
 No password-field detection is attempted.
 
 There is no typing history, analytics, network client or firmware-writing feature.
-Current key state is transient in the Python bridge and shared Omarchy UI process.
+Current key state is transient in the active bridge and shared Omarchy UI process.
 The plugin is not a sandbox, and these properties do not protect against malicious
 code already running as your desktop user.
 
@@ -29,3 +29,10 @@ daemon or permanent authorization policy. Capture stops before that preview and
 authentication. Session ACLs grant access to the desktop user, not exclusively to
 Keycorner; existing broader Vial rules are not removed. See
 [keyboard access](docs/KEYBOARD_ACCESS.md) for scope and cleanup details.
+
+On the Rust branch, the runtime is a native executable. The small `unsafe` blocks
+call Linux `poll`, `read`, `ioctl`, `fcntl`, access checks and resource limits;
+file ownership and cleanup use Rust RAII. Compressed Vial metadata still uses
+system liblzma through xz2, with memory and output limits. Rust does not eliminate
+protocol, permission, native-library or shared-UI risks. Cargo.lock pins dependencies;
+this port and its tests are not a third-party security audit.

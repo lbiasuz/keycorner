@@ -6,7 +6,7 @@ No marketplace submission or public release has been created.
 ## Current readiness
 
 - Root manifest, MIT license, README and changelog are included.
-- Automated Python tests, settings tests and source compilation run in GitHub Actions.
+- Rust tests/lint, Python reference tests, settings tests and source compilation run in GitHub Actions.
 - The installed Omarchy validator accepts the manifest.
 - Installation documents required setup, scoped USB permissions and removal.
 - Standard keyboard mode and optional Crosses Vial layout support are included.
@@ -41,3 +41,12 @@ Proposed listing:
 - Summary: A movable, translucent Crosses 54 Rev2 keyboard reference for Omarchy,
   with live key highlights, layer previews and persistent settings.
 - Limitations: exact layer telemetry, non-US layout presets, and generic Vial layouts are not included.
+
+## Rust branch packaging
+
+`./scripts/package.sh` creates a native Linux archive in `dist/`, without Python
+source, Cargo caches or personal layouts. Build on the oldest supported target
+system and test shared-library compatibility before public distribution; the local
+Arch-built executable is not a universal Linux binary. Git installation alone
+does not build it: source installs must run `./keycorner.sh install` with Cargo,
+or a release must provide a verified native archive. No artifact has been published.

@@ -1,7 +1,7 @@
 name: Checks
 on:
   push:
-    branches: [main]
+    branches: [main, rust-backend]
   pull_request:
 permissions:
   contents: read
@@ -16,6 +16,17 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - name: Rust toolchain and native dependencies
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+          sudo apt-get update
+          sudo apt-get install -y liblzma-dev pkg-config
+      - name: Rust formatting and lint
+        run: |
+          cargo fmt --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo build --locked --release
       - name: Python and configuration tests
         run: ./keycorner.sh test
       - name: Compile Python sources
