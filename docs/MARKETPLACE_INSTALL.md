@@ -23,4 +23,6 @@ Failures appear in Settings with a retry action. A failed startup does not enabl
 
 Automated tests cover absent executable, unsupported architecture, first setup without Cargo, repeated setup without extra compositor reloads, and preserved hidden/paused settings. Rust tests cover setup rollback. Package checks cover entry points and JS dependencies.
 
-A real fresh-account install/update/remove test remains the next preparation step. Marketplace publication and submission remain explicitly deferred.
+The real Omarchy add/enable, update, disable and remove commands were also exercised in an isolated HOME with a nested compositor and Omarchy shell. Installation bootstrapped successfully, an update preserved hidden/paused state and appearance settings, disabling removed the IPC target, and removal preserved settings with no Hyprland configuration errors. No compiler or input-device access was needed.
+
+This is a clean-profile lifecycle test, not a fresh OS account permission test. Administrator authentication and physical input access still need that separate validation. See [release readiness](marketplace/READINESS.md). Publication and submission remain deferred.

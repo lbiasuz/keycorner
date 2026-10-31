@@ -28,3 +28,10 @@ GitHub publication does not mean marketplace acceptance. The [Omarchy publishing
 - Limits: exact layers require optional firmware; physical switch identity is unavailable from ordinary HID output; standard presets use US ANSI labels.
 
 See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remaining validation.
+
+## Prepared submission materials
+
+- [Draft listing and preview](marketplace/LISTING.md)
+- [Validation evidence and remaining acceptance checks](marketplace/READINESS.md)
+
+These materials are private preparation only. Complete pending hardware/permission checks and obtain explicit publication authorization before making the repository public, publishing the draft release, or contacting marketplace maintainers.
