@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — 2026-10-31
+
+First public release, using the Rust runtime by default.
+
+- Add mouse-button highlighting (buttons 1–8) without interpreting pointer movement.
+- Add optional modifier badges and modifier-hold coloring for Vial keys.
+- Include the highlight helper in native release archives.
+
 
 - Match key highlights against active modifiers so shifted assignments such as `#` do not also light their unmodified digit.
 
@@ -24,7 +31,7 @@
 - Shared QML interface and install-time Python/Rust comparison switch.
 - Python source remains available as a reference; firmware is unchanged.
 
-## Unreleased
+## Earlier development (included in 0.6.0)
 
 - Add a read-only evdev backend for standard keyboards with ANSI 104/TKL/60% presets.
 - Select one physical keyboard; keep Crosses Vial layout support optional.

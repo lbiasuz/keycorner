@@ -30,7 +30,7 @@ authentication. Session ACLs grant access to the desktop user, not exclusively t
 Keycorner; existing broader Vial rules are not removed. See
 [keyboard access](docs/KEYBOARD_ACCESS.md) for scope and cleanup details.
 
-On the Rust branch, the runtime is a native executable. The small `unsafe` blocks
+In the Rust runtime, the runtime is a native executable. The small `unsafe` blocks
 call Linux `poll`, `read`, `ioctl`, `fcntl`, access checks and resource limits;
 file ownership and cleanup use Rust RAII. Compressed Vial metadata still uses
 system liblzma through xz2, with memory and output limits. Rust does not eliminate

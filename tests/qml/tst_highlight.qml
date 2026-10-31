@@ -25,6 +25,10 @@ TestCase {
         compare(Highlight.keys(keys,0,null,[224,225,4],'vial'),[false,false,true,false])
         compare(Highlight.keys(keys,0,null,[229,4],'vial'),[false,false,false,true])
     }
+    function test_mouse_buttons() {
+        compare(Highlight.keys([key(209,257),key(210,258)],0,null,[257],'vial'),[true,false])
+        compare(Highlight.keys([key(209,257)],0,null,[],'vial'),[false])
+    }
     function test_standard_unchanged() {
         compare(Highlight.keys([key(0x0220,32)],0,null,[32],'standard'),[true])
     }

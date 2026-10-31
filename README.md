@@ -2,9 +2,9 @@
 
 ![Checks](https://github.com/lbiasuz/keycorner/actions/workflows/checks.yml/badge.svg)
 
-**Private release preparation · MIT · Omarchy 4 / Hyprland Lua**
+**v0.6.0 · MIT desktop plugin · Omarchy 4 / Hyprland Lua**
 
-A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo branch replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
+A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo runtime replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
 
 ## Use
 
@@ -57,7 +57,8 @@ Settings save automatically to `~/.config/omarchy/keycorner.json` and persist ac
 | Key size | 28–60 px |
 | Input | Show/hide, pause/resume |
 | Mouse | Lock position, click through overlay |
-| Layout | Preview layer, conservative layer suggestions |
+| Layout | Preview layer, conservative layer suggestions, automatic firmware layers when available |
+| Modifiers | Modifier badges; Vial modifier-hold coloring |
 
 Omarchy's current palette is applied automatically, including while HID capture is paused, hidden or disconnected. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
 
@@ -75,18 +76,17 @@ physical layouts are not implemented. Broader physical-keyboard coverage remains
 
 **Vial layout mode uses capabilities, not a vendor/product allowlist.** Setup finds
 a compatible raw HID interface, verifies the Vial response, and reads the physical
-layout and keymaps. Keyboard and consumer input reports are decoded from their
+layout and keymaps. Keyboard, consumer and mouse-button input reports are decoded from their
 HID descriptors, including report IDs. Unsupported protocols, rotated layouts and
 unsupported report fields produce a setup error; Standard mode remains available.
 QMK/VIA alone does not imply Vial layout discovery. Exact layer reporting requires the optional firmware integration. See [keyboard setup](docs/KEYBOARD_ACCESS.md).
 
 ## Install / update
 
-This repository is currently private; only authorized GitHub accounts can clone it.
-The same URL can be used for public installation after publication.
+Install from source, or download the native x86_64 archive from [GitHub Releases](https://github.com/lbiasuz/keycorner/releases/latest). The archive includes the executable and needs no Rust/Cargo installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. It targets current Omarchy/Arch Linux, not arbitrary older distributions.
 
 ```sh
-git clone --branch rust-backend https://github.com/lbiasuz/keycorner.git
+git clone https://github.com/lbiasuz/keycorner.git
 cd keycorner
 ./keycorner.sh install
 # Only if Omarchy retains the previous QML in its cache:
@@ -101,10 +101,10 @@ needed by the plugin or installer.
 
 `./keycorner.sh install` builds with Cargo, copies the native runtime into the
 plugin directory and enables it. `install.py` is retained as historical Python
-reference; do not use it to install this branch. A packaged build can use the same
+reference; do not use it to install the Rust runtime. A packaged build can use the same
 shell installer without Cargo. See [Rust architecture and comparison](docs/RUST.md).
 
-For this source-built branch, pull changes and rerun `./keycorner.sh install`.
+For source-built installations, pull changes and rerun `./keycorner.sh install`.
 A Git-only plugin update does not rebuild the native executable.
 If Omarchy retains cached QML, use `omarchy restart shell` after saving your work.
 Enabled plugins start with Omarchy; visibility and pause settings govern capture.
@@ -162,11 +162,11 @@ All configuration changes persist. Native IPC uses `omarchy-shell keycorner <met
 
 ## Keyboard behavior and limits
 
-In Vial mode, at each input-process startup, the bridge downloads the actual physical layout and available keymaps. It highlights standard HID key output, modifiers, and common media keys, including the board's NKRO reports. Dual-role labels show tap and hold functions using the keyboard’s reported Vial protocol, including legacy home-row modifiers. Disconnects clear highlights and trigger reconnection. Pause and resume after remapping in Vial; close Vial first to avoid competing raw-HID transactions.
+In Vial mode, at each input-process startup, the bridge downloads the actual physical layout and available keymaps. It highlights standard HID key output, modifiers, and common media keys, including the board's NKRO reports and mouse buttons 1–8. Pointer movement is ignored. Dual-role labels show tap and hold functions using the keyboard’s reported Vial protocol, including legacy home-row modifiers. Disconnects clear highlights and trigger reconnection. Pause and resume after remapping in Vial; close Vial first to avoid competing raw-HID transactions.
 
-**Exact live layers are available with the experimental [CSTC40 firmware integration](firmware/cstc40/README.md).** The Rust bridge discovers support automatically and follows firmware layer masks, including transparent-key fallthrough. While capturing, live state takes precedence over the manual preview; a solid dot replaces the approximation button. Other keyboards retain manual layer previews and optional conservative suggestions. Firmware reports contain layer masks only, not physical switch positions; key highlighting still uses ordinary keyboard output reports. Firmware installation is separate from plugin installation. A [Crosses 54 Rev2 integration](firmware/crosses/README.md) is also prepared; its hardware validation is pending.
+**Exact live layers are available with the experimental [CSTC40 firmware integration](firmware/cstc40/README.md).** The Rust bridge discovers support automatically and follows firmware layer masks, including transparent-key fallthrough. While capturing, live state takes precedence over the manual preview; a solid dot replaces the approximation button. Other keyboards retain manual layer previews and optional conservative suggestions. Firmware reports contain layer masks only, not physical switch positions; key highlighting still uses ordinary keyboard output reports. Firmware installation is separate from plugin installation. An optional [Crosses firmware integration](firmware/crosses/README.md) is available.
 
-HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. A held mod-tap can emit a modifier without revealing its position. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
+HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. Modifier badges show active output modifiers. Optional modifier-hold coloring infers the source of unambiguous mod-tap assignments; duplicate bindings remain ambiguous. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
 
 Only the selected keyboard's interfaces are opened. Legacy Vial configurations with no selection can adopt a single compatible device. The Vial client permits only read commands; it neither unlocks Vial nor bypasses matrix-test protection. Key state stays in memory and is piped to the UI, with no typing logs or network transmission. **Password-field keys are visible too: use Super + Ctrl + Shift + K before sensitive typing. Screen locking automatically stops capture; unlocking resumes it if it was enabled.** The overlay has no pressed-key text line, but still highlights keys.
 
@@ -191,7 +191,7 @@ Device permissions must be configured on each machine. The runtime stays unprivi
 Run `./keycorner.sh build` to populate the local `bin/keycorner` first.
 `shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
 
-## Release preparation
+## Releases
 
 See [publication checklist](docs/PUBLISHING.md), [changelog](CHANGELOG.md), and [contribution guide](CONTRIBUTING.md). No firmware images or personal layout snapshots are bundled.
 

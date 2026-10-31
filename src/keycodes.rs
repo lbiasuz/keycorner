@@ -2,6 +2,8 @@
 //! interpreted with the other protocol's table.
 use crate::core;
 use serde_json::Value;
+// Separate namespace: mouse buttons must not collide with keyboard HID usages.
+pub const MOUSE_USAGE_BASE: u16 = 0x100;
 fn modifiers(bits: u16) -> String {
     let names = if bits & 16 != 0 {
         ["RCtrl", "RShift", "AltGr", "RSuper"]
@@ -28,6 +30,9 @@ pub fn label(code: u16, custom: &Value, protocol: u32) -> String {
             return name.chars().take(64).collect();
         };
         return format!("User {}", code - custom_start);
+    }
+    if !legacy && (0xd1..=0xd8).contains(&code) {
+        return format!("Btn{}", code - 0xd0);
     }
     if code < 256 {
         let extra = match code {
@@ -137,6 +142,10 @@ pub fn label(code: u16, custom: &Value, protocol: u32) -> String {
     format!("{code:04X}")
 }
 pub fn usage(code: u16, protocol: u32) -> Option<u16> {
+    let buttons = if protocol < 6 { 244..=248 } else { 0xd1..=0xd8 };
+    if buttons.contains(&code) {
+        return Some(MOUSE_USAGE_BASE + code - buttons.start() + 1);
+    }
     let modtap = if protocol < 6 {
         0x6000..=0x7fff
     } else {
@@ -146,7 +155,7 @@ pub fn usage(code: u16, protocol: u32) -> Option<u16> {
         || (0x4000..=0x4fff).contains(&code)
         || modtap.contains(&code)
     {
-        return core::usage(code & 255);
+        return usage(code & 255, protocol);
     }
     if code < 256 {
         return core::usage(code);

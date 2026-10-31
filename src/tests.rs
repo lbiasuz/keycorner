@@ -385,3 +385,35 @@ fn vial_layout_name_is_optional() {
     assert_eq!(layout["name"], "Vial keyboard");
     assert_eq!(layout["keys"][0]["labels"][0], "A");
 }
+
+#[test]
+fn mouse_buttons_ignore_motion_and_preserve_other_reports() {
+    let mouse = descriptor(
+        "05010902a10185020901a100050919012908150025017501950881020501093009311581257f750895028106c0c0",
+    );
+    assert!(!mouse.keyboard());
+    assert!(mouse.readable());
+    let mut state = crate::hid::State::default();
+    assert!(state.feed(&mouse, &[2, 0x81, 0, 0]));
+    assert_eq!(state.keys().collect::<Keys>(), Keys::from([257, 264]));
+    assert!(!state.feed(&mouse, &[2, 0x81, 50, 255]));
+    assert!(!state.feed(&mouse, &[2, 0])); // Truncated report cannot release a held button.
+    assert!(state.feed(&mouse, &[2, 0, 0, 0]));
+    assert!(state.keys().next().is_none());
+    for button in 1..=8 {
+        assert_eq!(crate::keycodes::usage(0xd0 + button, 6), Some(256 + button));
+        assert_eq!(
+            crate::keycodes::label(0xd0 + button, &Value::Null, 6),
+            format!("Btn{button}")
+        );
+    }
+    for button in 1..=5 {
+        assert_eq!(crate::keycodes::usage(243 + button, 5), Some(256 + button));
+    }
+    let keyboard = descriptor("05010906a1018501050719e029e7950875018102c0");
+    assert!(state.feed(&keyboard, &[1, 2]));
+    assert!(state.feed(&mouse, &[2, 1, 0, 0]));
+    assert_eq!(state.keys().collect::<Keys>(), Keys::from([225, 257]));
+    assert!(state.feed(&mouse, &[2, 0, 0, 0]));
+    assert_eq!(state.keys().collect::<Keys>(), Keys::from([225]));
+}

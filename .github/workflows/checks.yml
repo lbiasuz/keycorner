@@ -33,6 +33,8 @@ jobs:
         run: |
           cc -Wall -Wextra -Werror -DQMK_KEYBOARD_H='"fake_qmk.h"' -I tests/firmware tests/firmware/layers_test.c -o /tmp/keycorner-firmware-test
           /tmp/keycorner-firmware-test
+      - name: Native release archive smoke check
+        run: ./scripts/package.sh
       - name: Compile Python sources
         run: python -m compileall -q keycorner install.py tests
       - name: Check manifest and license

@@ -1,4 +1,4 @@
-//! Bounded decoding of keyboard/consumer HID input fields, using advertised report IDs.
+//! Bounded decoding of keyboard/consumer/mouse-button HID input fields, using advertised report IDs.
 //! Vendor fields are never interpreted as keys. No device I/O occurs here.
 use crate::{Result, core::Keys, err};
 use std::collections::BTreeMap;
@@ -136,7 +136,9 @@ impl Descriptor {
                             .filter(|b| *b <= 4096)
                             .ok_or("HID report too large")?;
                         if value & 1 == 0
-                            && ((app == (1, 6) && g.page == 7) || (app == (12, 1) && g.page == 12))
+                            && ((app == (1, 6) && g.page == 7)
+                                || (app == (12, 1) && g.page == 12)
+                                || (app == (1, 2) && g.page == 9))
                         {
                             let variable = value & 2 != 0;
                             let mut mapped = usages.clone();
@@ -220,7 +222,11 @@ impl Descriptor {
         };
         let mut groups = BTreeMap::<&str, Keys>::new();
         for field in &report.fields {
-            let name = if field.page == 7 { "keyboard" } else { "media" };
+            let name = match field.page {
+                7 => "keyboard",
+                9 => "mouse",
+                _ => "media",
+            };
             let held = groups.entry(name).or_default();
             for n in 0..field.count {
                 let bit = field.offset + n * field.size;
@@ -241,6 +247,10 @@ impl Descriptor {
                 if field.page == 7 {
                     if (4..=255).contains(&usage) {
                         held.insert(usage);
+                    }
+                } else if field.page == 9 {
+                    if (1..=8).contains(&usage) {
+                        held.insert(crate::keycodes::MOUSE_USAGE_BASE + usage);
                     }
                 } else if let Some(code) = match usage {
                     0xe2 => Some(168),

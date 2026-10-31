@@ -10,9 +10,9 @@ same HID report format. Tests should use synthetic data. Do not submit personal
 keymaps, recorded keystrokes, firmware dumps, screenshots of other applications,
 access tokens or local system configuration.
 
-Firmware modifications and flashing are outside the current release scope.
+Optional firmware integrations live in `firmware/` under their own GPL license. Keep them separate from the MIT desktop runtime; document hardware identity, recovery, protocol changes and tests. The plugin installer never flashes firmware.
 
-On `rust-backend`, use `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings`,
+For the Rust runtime, use `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings`,
 and `./keycorner.sh test`. Cargo tests run without Python; the combined test command
 also runs the reference Python and JavaScript tests. `scripts/generate_parity.py`
 refreshes synthetic golden fixtures from the reference. It must not connect to a
