@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.6.0 — 2026-10-31
+## 0.6.0 — prepared 2026-10-31 (unpublished)
 
-First public release, using the Rust runtime by default.
+Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
 - Add mouse-button highlighting (buttons 1–8) without interpreting pointer movement.
 - Add optional modifier badges and modifier-hold coloring for Vial keys.

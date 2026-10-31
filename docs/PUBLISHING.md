@@ -1,6 +1,8 @@
 # Publishing Keycorner
 
-The v0.6.0 release uses the Rust runtime on the default `main` branch. The desktop plugin is MIT; optional firmware integration sources are GPL-2.0-or-later and remain separate from the native plugin archive.
+The repository is private; v0.6.0 is a draft with native archive and checksum attached. GitHub publication and marketplace submission are deferred until a later explicit instruction.
+
+The v0.6.0 release candidate uses the Rust runtime on the default `main` branch. The desktop plugin is MIT; optional firmware integration sources are GPL-2.0-or-later and remain separate from the native plugin archive.
 
 ## Release procedure
 
