@@ -8,6 +8,7 @@ const FILES: &[&str] = &[
     "Config.js",
     "ShortcutRecorder.qml",
     "ShortcutKeys.js",
+    "Highlight.js",
     "README.md",
     "LICENSE",
     "hyprland.lua",

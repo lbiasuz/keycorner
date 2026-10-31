@@ -148,7 +148,7 @@ pub fn message(layout: &Value, state: State) -> Value {
     let protocol = layout["protocol"].as_u64().unwrap_or(6) as u32;
     let keys: Vec<Value> = layout["keys"].as_array().into_iter().flatten().map(|key| {
         let code = effective(key["codes"].as_array().map(Vec::as_slice).unwrap_or(&[]),state.mask());
-        json!({"label":keycodes::label(code,&layout["customKeycodes"],protocol),"usage":keycodes::usage(code,protocol)})
+        json!({"code":code,"label":keycodes::label(code,&layout["customKeycodes"],protocol),"usage":keycodes::usage(code,protocol)})
     }).collect();
     json!({"type":"layers","layer":state.highest(),"layerMask":state.layers,"defaultLayerMask":state.default,"keys":keys})
 }

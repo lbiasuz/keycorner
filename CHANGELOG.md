@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Match key highlights against active modifiers so shifted assignments such as `#` do not also light their unmodified digit.
+
 - Optional CSTC40 single-PCB firmware reports live QMK layer masks through a leased Vial raw-HID extension.
 - Rust overlay follows exact layers and resolves transparent keys against the enabled stack.
 - Unsupported keyboards retain existing behavior; capture pause and lock guards still close input access.

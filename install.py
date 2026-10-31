@@ -12,7 +12,7 @@ from keycorner.config_file import ensure_config
 
 PLUGIN_ID = 'lbiasuz.keycorner'
 RUNTIME_FILES = ['manifest.json', 'Overlay.qml', 'SettingsWindow.qml', 'BarWidget.qml',
-                 'Config.js', 'ShortcutRecorder.qml', 'ShortcutKeys.js', 'README.md', 'LICENSE']
+                 'Config.js', 'ShortcutRecorder.qml', 'ShortcutKeys.js', 'Highlight.js', 'README.md', 'LICENSE']
 INCLUDE = 'require("hypr.keycorner")'
 INCLUDE_BLOCK = '\n-- Floating Keycorner keyboard overlay.\n' + INCLUDE + '\n'
 

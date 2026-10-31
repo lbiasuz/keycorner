@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import QtQuick.Controls as Controls
 import "Config.js" as Config
 import "Backend.js" as Backend
+import "Highlight.js" as Highlight
 
 Item {
     id: root
@@ -203,6 +204,7 @@ Item {
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
     property var palette: ({background: '#faf4ed', foreground: '#575279', accent: '#56949f', muted: '#cecacd', lighter_background: '#f2e9e1', dark_foreground: '#9893a5'})
     property var pressed: []
+    readonly property var highlighted: Highlight.keys(layout.keys, activeLayer, firmwareLayer >= 0 ? firmwareKeys : null, pressed, config.backend)
     readonly property int preview: Math.min(config.previewLayer, Math.max(0, layout.layers-1))
     property int estimate: -1
     property int firmwareLayer: -1
@@ -467,7 +469,7 @@ Item {
                         required property int index
                         readonly property var liveKey: root.firmwareLayer >= 0 ? root.firmwareKeys[index] : null
                         readonly property int code: liveKey ? (liveKey.usage || 0) : (modelData.usages[root.activeLayer] || 0)
-                        readonly property bool down: code > 0 && root.pressed.includes(code)
+                        readonly property bool down: root.highlighted[index] === true
                         x: modelData.x * root.unit; y: modelData.y * root.unit
                         width: modelData.w * root.unit - 3; height: modelData.h * root.unit - 3
                         radius: 4
