@@ -23,3 +23,6 @@ dist/
 /target/
 /bin/*
 !/bin/keycorner
+
+# Reviewed synthetic marketplace preview
+!docs/marketplace/preview.png
