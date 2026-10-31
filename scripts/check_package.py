@@ -24,6 +24,8 @@ with tarfile.open(sys.argv[1]) as archive:
     with tempfile.TemporaryDirectory() as temp:
         archive.extractall(temp, filter='data')
         binary = Path(temp) / 'keycorner-rust/bin/keycorner'
+        payload = binary.read_bytes()
+        assert not re.search(rb'/home/[^/\x00 ]+/|/Users/[^/\x00 ]+/', payload), 'Private build path in executable'
         version = json.loads(subprocess.check_output([binary, '--version']))['version']
         assert version == json.loads((root / 'manifest.json').read_text())['version']
 print('Archive paths, UI dependencies, contents and executable version verified.')
