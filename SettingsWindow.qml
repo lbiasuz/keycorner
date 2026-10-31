@@ -103,7 +103,7 @@ FloatingWindow {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap
                     text: controller.deviceMessage || (!controller.selectedKeyboard ? 'Keyboard not selected or disconnected' :
                         controller.config.backend === 'vial' && !controller.selectedKeyboard.vial ? 'Use Standard mode for this keyboard' :
-                        (controller.config.backend === 'standard' ? controller.selectedKeyboard.standardAccessible : controller.selectedKeyboard.vialAccessible) ? (controller.savedKeyboard ? (controller.profileMatchesSelection ? 'Saved · ' + controller.savedKeyboard.keys + ' keys · ' + controller.savedKeyboard.layers + ' layers' : 'Unsaved changes') : 'Ready to add keyboard') : 'Enable access, then add keyboard')
+                        (controller.config.backend === 'standard' ? controller.selectedKeyboard.standardAccessible : controller.selectedKeyboard.vialAccessible) ? (controller.savedKeyboard ? (controller.profileMatchesSelection ? 'Saved · ' + controller.savedKeyboard.keys + ' keys · ' + controller.savedKeyboard.layers + ' layers' : 'Unsaved changes') : 'Ready to add keyboard') : 'Enable access to continue setup')
                 }
                 Label {
                     textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.WordWrap

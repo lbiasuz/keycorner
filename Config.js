@@ -53,3 +53,24 @@ function saveKeyboard(config, result) {
     // Reuse validation before persisting a probe response.
     return normalize(Object.assign({}, config, {keyboards:profiles})).keyboards;
 }
+
+// Discovery is metadata only. A raw HID interface is a candidate, not proof of Vial.
+function onboarding(config, devices) {
+    var selected = devices.find(function(d) { return d.id === config.deviceId; });
+    if (config.deviceId && !selected) return {action:'wait', message:'Reconnect the selected keyboard or choose another'};
+    if (!selected) {
+        var candidates = devices.filter(function(d) { return d.vial; });
+        if (candidates.length === 1) selected = candidates[0];
+        else if (devices.length === 1) selected = devices[0];
+        else return {action:'choose', message:devices.length ? 'Choose a keyboard' : 'Connect a keyboard'};
+        return {action:'select', device:selected};
+    }
+    var saved = config.keyboards[selected.id];
+    var ready = saved && saved.backend === config.backend && saved.standardLayout === config.standardLayout;
+    if (config.backend === 'standard' && !selected.standardAccessible) return {action:'permission', message:'Enable access to use this keyboard'};
+    if (ready && config.backend === 'standard') return {action:'ready'};
+    if (config.backend !== 'vial') return {action:'standard', message:'Choose the matching ANSI preset, then add keyboard'};
+    if (!selected.vial || !selected.keyboardReports) return {action:'unsupported', message:'Vial reports unavailable; choose Standard mode'};
+    if (!selected.vialAccessible) return {action:'permission', message:'Enable access to read this keyboard’s layout'};
+    return {action:ready ? 'ready' : 'inspect'};
+}

@@ -110,12 +110,25 @@ If Omarchy retains cached QML, use `omarchy restart shell` after saving your wor
 Enabled plugins start with Omarchy; visibility and pause settings govern capture.
 The current dragged position and resized dimensions are session-only.
 
-In **Settings → Keyboard setup**, select a connected keyboard and mode, then click
-**Add keyboard**. Vial reads its own layout; Standard uses your selected ANSI preset.
-Successful setup saves a separate profile for that keyboard. Selecting a saved
-keyboard restores its mode and preset; **Read layout & save** updates it and
-**Forget** removes only its profile. Disconnected saved keyboards stay listed.
-A first install opens Settings, and an empty overlay shows its error/setup action.
+On first use, one Vial candidate is selected automatically, its protocol and layout
+are checked, and its profile is saved. If multiple Vial candidates are connected,
+Settings asks you to choose. Ordinary keyboards use a manually chosen ANSI preset.
+A device advertising a Vial-style interface is only a candidate: unsupported VIA-only
+or malformed responses produce a clear error and offer Standard mode.
+
+Device arrivals and removals trigger discovery through udev notifications, without
+periodic scanning. Reconnecting a saved keyboard at the same USB port restores its
+profile. An explicit selection is never silently replaced by another keyboard.
+USB-port changes currently require selecting/adding the device again, preventing
+accidental selection of identical boards with shared serial numbers.
+
+In **Settings → Keyboard setup**, choose a keyboard to read an unsaved Vial layout
+automatically. **Read layout & save** retries or refreshes it; **Forget** removes
+only its profile. Standard mode requires choosing a preset and **Add keyboard**.
+When access is missing, **Enable access** previews the rule and asks for administrator
+authentication. Successful Vial access setup automatically continues layout discovery.
+Hidden/paused/locked sessions never start input capture as a side effect of setup.
+See the [compatibility matrix and release gate](docs/COMPATIBILITY.md).
 
 If necessary, **Enable access** previews and
 installs a device-specific Keycorner udev rule after administrator authentication.

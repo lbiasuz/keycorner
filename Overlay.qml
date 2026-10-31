@@ -21,7 +21,7 @@ Item {
     property bool settingsOpen: false
     readonly property string configPath: (Quickshell.env('XDG_CONFIG_HOME') || Quickshell.env('HOME') + '/.config') + '/omarchy/keycorner.json'
     function loadConfig() {
-        try { config = Config.normalize(JSON.parse(configFile.text())); configError = ''; configReady = true; if (!config.deviceId) settingsOpen = true }
+        try { config = Config.normalize(JSON.parse(configFile.text())); configError = ''; configReady = true; discoveryDelay.restart() }
         catch (error) { configError = String(error); configReady = true }
     }
     function updateConfig(patch) {
@@ -93,6 +93,23 @@ Item {
     property var keyboardDevices: []
     property string deviceMessage: ''
     property var permissionPlan: null
+    property var setupAttempts: ({})
+    property bool suppressAutoSelection: false
+    function autoSetup() {
+        if (!configReady || configError || !sessionSafe || deviceBusy || permissionPlan || (!shown && !settingsOpen) || paused) return
+        const decision = Config.onboarding(config, keyboardDevices)
+        if (decision.action === 'select') {
+            if (suppressAutoSelection) return
+            selectKeyboard(decision.device); return
+        }
+        if (decision.action === 'inspect') {
+            if (setupAttempts[captureSignature]) return
+            setupAttempts[captureSignature] = true
+            setupKeyboard(); return
+        }
+        if (decision.message) deviceMessage = decision.message
+        if (['choose','permission','unsupported','standard'].indexOf(decision.action) >= 0) settingsOpen = true
+    }
     readonly property var selectedKeyboard: keyboardDevices.find(d => d.id === config.deviceId) || null
     property bool setupPending: false
     property bool bridgeAlive: false
@@ -102,9 +119,12 @@ Item {
     readonly property bool profileMatchesSelection: !!savedKeyboard && savedKeyboard.backend === config.backend && savedKeyboard.standardLayout === config.standardLayout
     function selectKeyboard(device) {
         deviceMessage = ''
+        suppressAutoSelection = false
         updateConfig(Config.selectKeyboard(config, device))
+        Qt.callLater(autoSetup)
     }
     function forgetKeyboard() {
+        suppressAutoSelection = true
         var profiles = Object.assign({}, config.keyboards)
         delete profiles[config.deviceId]
         updateConfig({keyboards:profiles,deviceId:'',backend:'standard'})
@@ -128,8 +148,11 @@ Item {
             root.setupPending = false
         }
     }
-    onSessionSafeChanged: if (!sessionSafe) {
-        setupDelay.stop(); setupPending = false; keyboardSetup.running = false
+    onSessionSafeChanged: {
+        if (!sessionSafe) {
+            setupDelay.stop(); setupPending = false; keyboardSetup.running = false
+            setupAttempts = ({})
+        } else discoveryDelay.restart()
     }
     Process {
         id: keyboardSetup
@@ -140,7 +163,7 @@ Item {
             if (!root.sessionSafe || signature !== root.captureSignature) return
             try {
                 const result = JSON.parse(response)
-                if (!result.ok || exitCode !== 0) { root.deviceMessage = result.error || 'Could not read keyboard'; return }
+                if (!result.ok || exitCode !== 0) { root.deviceMessage = (result.error || 'Could not read keyboard') + '. Try Standard mode or retry Read layout.'; root.settingsOpen = true; return }
                 root.updateConfig({keyboards:Config.saveKeyboard(root.config,result)})
                 root.layout = result.layout
                 root.deviceMessage = 'Saved · ' + result.layout.keys.length + ' keys · ' + result.layout.layers + ' layers'
@@ -148,7 +171,7 @@ Item {
         }
     }
     function scanDevices() {
-        if (deviceScan.running) return
+        if (!configReady || deviceScan.running) return
         deviceScan.running = true
     }
     function devicePermission(action) {
@@ -163,6 +186,15 @@ Item {
         deviceAction.command = Backend.command(Qt.resolvedUrl('.'), 'permissions', [action,id,mode])
         deviceAction.running = true
     }
+    // Kernel device notifications only: no input-event capture or periodic scans.
+    Timer { id: discoveryDelay; interval: 350; onTriggered: root.scanDevices() }
+    Process {
+        command: ['udevadm','monitor','--udev','--subsystem-match=input','--subsystem-match=hidraw']
+        running: root.configReady
+        stdout: SplitParser { onRead: line => { if (line.startsWith('UDEV')) discoveryDelay.restart() } }
+    }
+    onShownChanged: if (shown) discoveryDelay.restart()
+    onPausedChanged: if (!paused) discoveryDelay.restart()
     Process {
         id: deviceScan
         command: Backend.command(Qt.resolvedUrl('.'), 'devices')
@@ -172,10 +204,12 @@ Item {
                     const result = JSON.parse(text)
                     if (!result.ok) { root.deviceMessage = result.error; return }
                     root.keyboardDevices = result.devices
-                    if (!root.config.deviceId && root.config.backend === 'vial') {
-                        const supported = result.devices.filter(d => d.vial)
-                        if (supported.length === 1) root.updateConfig({deviceId:supported[0].id})
+                    const attempts = {}
+                    for (const signature in root.setupAttempts) {
+                        if (result.devices.some(d => signature.split(':')[1] === d.id)) attempts[signature] = true
                     }
+                    root.setupAttempts = attempts
+                    Qt.callLater(root.autoSetup)
                 } catch (error) { root.deviceMessage = 'Could not list keyboards' }
             }
         }
@@ -198,7 +232,7 @@ Item {
         }
     }
     readonly property string captureSignature: config.backend + ':' + config.deviceId + ':' + config.standardLayout
-    onCaptureSignatureChanged: { deviceMessage = ''; status = 'Connect and set up this keyboard in Settings'; pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0}); layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
+    onCaptureSignatureChanged: { deviceMessage = ''; status = 'Connect and set up this keyboard in Settings'; pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0}); layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart(); Qt.callLater(autoSetup) }
     Timer { id: backendRestart; interval: 100; onTriggered: {} }
     SettingsWindow { controller: root; visible: root.settingsOpen }
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
@@ -302,7 +336,7 @@ Item {
         }
     }
     readonly property bool sessionSafe: applicationFocused && unlockedConfirmed
-    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe && !deviceBusy && !permissionPlan && !backendRestart.running && (config.deviceId !== '' || config.backend === 'vial')
+    readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe && !deviceBusy && !permissionPlan && !backendRestart.running && profileMatchesSelection
     onCaptureEnabledChanged: {
         pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0})
         if (!captureEnabled) status = !sessionSafe ? 'Session protected · input access stopped' : paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'

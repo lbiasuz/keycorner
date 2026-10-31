@@ -44,3 +44,22 @@ assert.equal(c.normalize({}).showModifierBadges,true);
 assert.equal(c.normalize({}).highlightModifierHolds,true);
 assert.equal(c.normalize({showModifierBadges:false,highlightModifierHolds:false}).highlightModifierHolds,false);
 assert.throws(()=>c.normalize({highlightModifierHolds:'true'}));
+
+const fresh = c.defaults();
+const vial = {id:first,name:'Unknown Vial',vial:true,keyboardReports:true,vialAccessible:true};
+const ordinary = {id:second,name:'Ordinary',vial:false};
+assert.equal(c.onboarding(fresh,[]).action,'choose');
+assert.equal(c.onboarding(fresh,[vial,ordinary]).device.id,first);
+assert.equal(c.onboarding(fresh,[vial,{...vial,id:second}]).action,'choose');
+const selected = c.normalize({...fresh,...c.selectKeyboard(fresh,vial)});
+assert.equal(c.onboarding(selected,[vial]).action,'inspect');
+assert.equal(c.onboarding(selected,[{...vial,vialAccessible:false}]).action,'permission');
+assert.equal(c.onboarding(selected,[{...vial,keyboardReports:false}]).action,'unsupported');
+assert.equal(c.onboarding(selected,[ordinary]).action,'wait'); // Never hijack an explicit selection.
+assert.equal(c.onboarding({...selected,backend:'standard'},[{...vial,standardAccessible:true}]).action,'standard');
+assert.equal(c.onboarding({...selected,keyboards:{[first]:{backend:'vial',standardLayout:'ansi104'}}},[vial]).action,'ready');
+console.log('Automatic onboarding, ambiguity, permission and reconnect decisions passed.');
+assert.equal(c.onboarding({...selected,keyboards:{[first]:{backend:'vial',standardLayout:'ansi104'}}},[{...vial,vialAccessible:false}]).action,'permission');
+assert.equal(c.onboarding({...selected,backend:'standard'},[{...vial,standardAccessible:false}]).action,'permission');
+assert.equal(c.onboarding(fresh,[ordinary]).device.id,second);
+assert.equal(c.onboarding({...selected,backend:'standard',keyboards:{[first]:{backend:'standard',standardLayout:'ansi104'}}},[{...vial,standardAccessible:true}]).action,'ready');

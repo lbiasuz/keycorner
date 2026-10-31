@@ -4,6 +4,9 @@
 
 Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
+- Add event-driven keyboard discovery and automatic setup for a single Vial candidate.
+- Continue setup after permission grants, preserve explicit selections, and document compatibility release gates.
+
 - Add mouse-button highlighting (buttons 1–8) without interpreting pointer movement.
 - Add optional modifier badges and modifier-hold coloring for Vial keys.
 - Include the highlight helper in native release archives.
