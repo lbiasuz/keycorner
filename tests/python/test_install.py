@@ -4,7 +4,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "reference/python"))
 from install import copy_runtime, setup_hyprland, setup_shortcut, INCLUDE
 from keycorner.config_file import ensure_config
 
@@ -22,8 +22,8 @@ class InstallTests(unittest.TestCase):
     def test_setup_is_idempotent_and_preserves_custom_rules(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); source=root/'source'; hypr=root/'hypr'
-            source.mkdir(); hypr.mkdir()
-            (source/'hyprland.lua').write_text('-- default rule')
+            source.mkdir(); (source/'config').mkdir(); hypr.mkdir()
+            (source/'config/hyprland.lua').write_text('-- default rule')
             (hypr/'hyprland.lua').write_text('-- existing user config\n')
             setup_hyprland(source,hypr,lambda:None)
             self.assertIn(INCLUDE,(hypr/'hyprland.lua').read_text())
@@ -35,8 +35,8 @@ class InstallTests(unittest.TestCase):
     def test_validation_failure_restores_original_config(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp); source=root/'source'; hypr=root/'hypr'
-            source.mkdir(); hypr.mkdir()
-            (source/'hyprland.lua').write_text('-- rule')
+            source.mkdir(); (source/'config').mkdir(); hypr.mkdir()
+            (source/'config/hyprland.lua').write_text('-- rule')
             original='-- user configuration\n'
             (hypr/'hyprland.lua').write_text(original)
             calls=[]
@@ -72,7 +72,7 @@ class ShortcutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / 'bindings.lua').write_text('-- user bindings')
-            (root / 'shortcuts.lua').write_text('-- default')
+            (root / 'config').mkdir(); (root / 'config/shortcuts.lua').write_text('-- default')
             with patch('install.subprocess.check_output', return_value='[]'):
                 with self.assertRaises(RuntimeError):
                     setup_shortcut(root, root, lambda: (_ for _ in ()).throw(RuntimeError('invalid')))

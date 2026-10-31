@@ -1,20 +1,6 @@
 use crate::{Result, atomic, err, run, shortcuts};
 use std::{fs, io::Write, os::unix::fs::OpenOptionsExt, path::Path};
-const FILES: &[&str] = &[
-    "manifest.json",
-    "Overlay.qml",
-    "SettingsWindow.qml",
-    "BarWidget.qml",
-    "Config.js",
-    "ShortcutRecorder.qml",
-    "ShortcutKeys.js",
-    "Highlight.js",
-    "README.md",
-    "LICENSE",
-    "hyprland.lua",
-    "shortcuts.lua",
-    "keycorner.sh",
-];
+const FILES: &str = include_str!("../packaging/runtime-files.txt");
 pub fn config_init() -> Result<()> {
     let path = crate::config_root()?.join("omarchy/keycorner.json");
     fs::create_dir_all(path.parent().unwrap())?;
@@ -135,15 +121,12 @@ pub fn install(args: &[String]) -> Result<()> {
     if !setup_only {
         fs::create_dir_all(target.join("bin"))?;
         if source != target.canonicalize()? {
-            for name in FILES {
+            for name in FILES.lines() {
+                fs::create_dir_all(target.join(name).parent().unwrap())?;
                 atomic(
                     &target.join(name),
                     &fs::read(source.join(name))?,
-                    if *name == "keycorner.sh" {
-                        0o755
-                    } else {
-                        0o644
-                    },
+                    if name == "keycorner.sh" { 0o755 } else { 0o644 },
                 )?;
             }
         }
@@ -153,22 +136,24 @@ pub fn install(args: &[String]) -> Result<()> {
             atomic(&destination, &fs::read(executable)?, 0o755)?;
         }
         if engine == "python" {
-            fs::create_dir_all(target.join("keycorner"))?;
-            for entry in fs::read_dir(source.join("keycorner"))? {
+            fs::create_dir_all(target.join("reference/python/keycorner"))?;
+            for entry in fs::read_dir(source.join("reference/python/keycorner"))? {
                 let entry = entry?;
                 if entry.path().extension().is_some_and(|e| e == "py") {
                     atomic(
-                        &target.join("keycorner").join(entry.file_name()),
+                        &target
+                            .join("reference/python/keycorner")
+                            .join(entry.file_name()),
                         &fs::read(entry.path())?,
                         0o644,
                     )?;
                 }
             }
         }
-        let runtime = fs::read_to_string(source.join("Backend.js"))?
+        let runtime = fs::read_to_string(source.join("ui/Backend.js"))?
             .replace("var engine = 'python'", "var engine = 'rust'")
             .replace("var engine = 'rust'", &format!("var engine = '{engine}'"));
-        atomic(&target.join("Backend.js"), runtime.as_bytes(), 0o644)?;
+        atomic(&target.join("ui/Backend.js"), runtime.as_bytes(), 0o644)?;
     }
     config_init()?;
     let hypr = crate::config_root()?.join("hypr");
@@ -177,7 +162,7 @@ pub fn install(args: &[String]) -> Result<()> {
         &hypr,
         "hyprland.lua",
         "keycorner.lua",
-        "hyprland.lua",
+        "config/hyprland.lua",
         "require(\"hypr.keycorner\")",
         false,
     )?;
@@ -186,7 +171,7 @@ pub fn install(args: &[String]) -> Result<()> {
         &hypr,
         "bindings.lua",
         "keycorner-shortcuts.lua",
-        "shortcuts.lua",
+        "config/shortcuts.lua",
         "require(\"hypr.keycorner-shortcuts\")",
         true,
     )?;

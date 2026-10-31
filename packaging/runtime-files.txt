@@ -1,0 +1,17 @@
+manifest.json
+ui/Backend.js
+ui/BarWidget.qml
+ui/Config.js
+ui/Highlight.js
+ui/Overlay.qml
+ui/SettingsWindow.qml
+ui/ShortcutKeys.js
+ui/ShortcutRecorder.qml
+README.md
+LICENSE
+SECURITY.md
+CHANGELOG.md
+CONTRIBUTING.md
+config/hyprland.lua
+config/shortcuts.lua
+keycorner.sh

@@ -3,7 +3,7 @@ import lzma
 from pathlib import Path
 import sys
 import unittest
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'keycorner'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'reference/python/keycorner'))
 from core import decode_definition, geometry, MAX_DEFINITION_BYTES, Vial
 from bridge import state_message
 

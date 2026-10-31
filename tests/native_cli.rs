@@ -73,7 +73,7 @@ fn shortcut_failure_rolls_back_and_custom_lua_is_preserved() {
 configerrors) if grep -q BAD "$XDG_CONFIG_HOME/hypr/keycorner-shortcuts.lua"; then echo 'invalid key'; else echo ok; fi;;
 esac"#);
     let path = s.0.join("config/hypr/keycorner-shortcuts.lua");
-    let original = include_str!("../shortcuts.lua");
+    let original = include_str!("../config/shortcuts.lua");
     fs::write(&path, original).unwrap();
     let output = s
         .command()
@@ -113,11 +113,11 @@ fn installer_idempotence_and_validation_rollback() {
 configerrors) if grep -q BAD "$XDG_CONFIG_HOME/hypr/keycorner.lua" 2>/dev/null; then echo invalid; else echo ok; fi;;
 esac"#);
     let source = s.0.join("source");
-    fs::create_dir(&source).unwrap();
-    fs::write(source.join("hyprland.lua"), "BAD").unwrap();
+    fs::create_dir_all(source.join("config")).unwrap();
+    fs::write(source.join("config/hyprland.lua"), "BAD").unwrap();
     fs::write(
-        source.join("shortcuts.lua"),
-        include_str!("../shortcuts.lua"),
+        source.join("config/shortcuts.lua"),
+        include_str!("../config/shortcuts.lua"),
     )
     .unwrap();
     let main = s.0.join("config/hypr/hyprland.lua");
@@ -136,7 +136,7 @@ esac"#);
     assert!(!invoke().status.success());
     assert_eq!(fs::read_to_string(&main).unwrap(), "-- existing\n");
     assert!(!s.0.join("config/hypr/keycorner.lua").exists());
-    fs::write(source.join("hyprland.lua"), "-- good").unwrap();
+    fs::write(source.join("config/hyprland.lua"), "-- good").unwrap();
     assert!(invoke().status.success());
     let after = fs::read(&main).unwrap();
     fs::write(s.0.join("config/hypr/keycorner.lua"), "-- custom rule").unwrap();

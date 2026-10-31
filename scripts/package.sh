@@ -8,9 +8,10 @@ staging_dir="$(mktemp -d "$project_dir/dist/.package-XXXXXX")"
 trap 'rm -rf -- "$staging_dir"' EXIT
 package_dir="$staging_dir/keycorner-rust"
 mkdir -p "$package_dir/bin"
-for name in manifest.json Overlay.qml SettingsWindow.qml BarWidget.qml Config.js Highlight.js Backend.js ShortcutRecorder.qml ShortcutKeys.js README.md LICENSE SECURITY.md CHANGELOG.md CONTRIBUTING.md hyprland.lua shortcuts.lua keycorner.sh; do
+while IFS= read -r name; do
+  mkdir -p -- "$package_dir/$(dirname -- "$name")"
   cp -- "$name" "$package_dir/$name"
-done
+done < packaging/runtime-files.txt
 cp -- target/release/keycorner "$package_dir/bin/keycorner"
 mkdir -p "$package_dir/docs"
 cp -- docs/*.md "$package_dir/docs/"

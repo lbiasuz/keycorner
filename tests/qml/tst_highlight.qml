@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import '../../Highlight.js' as Highlight
+import '../../ui/Highlight.js' as Highlight
 TestCase {
     name: 'Highlight'
     function key(code, usage) { return {codes:[code],usages:[usage]} }

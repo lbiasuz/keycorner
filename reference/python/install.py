@@ -11,8 +11,8 @@ import time
 from keycorner.config_file import ensure_config
 
 PLUGIN_ID = 'lbiasuz.keycorner'
-RUNTIME_FILES = ['manifest.json', 'Overlay.qml', 'SettingsWindow.qml', 'BarWidget.qml',
-                 'Config.js', 'ShortcutRecorder.qml', 'ShortcutKeys.js', 'Highlight.js', 'README.md', 'LICENSE']
+RUNTIME_FILES = ['manifest.json', 'ui/Overlay.qml', 'ui/SettingsWindow.qml', 'ui/BarWidget.qml',
+                 'ui/Config.js', 'ui/Backend.js', 'ui/ShortcutRecorder.qml', 'ui/ShortcutKeys.js', 'ui/Highlight.js', 'README.md', 'LICENSE']
 INCLUDE = 'require("hypr.keycorner")'
 INCLUDE_BLOCK = '\n-- Floating Keycorner keyboard overlay.\n' + INCLUDE + '\n'
 
@@ -22,8 +22,9 @@ def copy_runtime(source, target):
         return
     target.mkdir(parents=True, exist_ok=True)
     for name in RUNTIME_FILES:
+        (target / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source / name, target / name)
-    shutil.copytree(source / 'keycorner', target / 'keycorner', dirs_exist_ok=True,
+    shutil.copytree(source / 'reference/python/keycorner', target / 'reference/python/keycorner', dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns('__pycache__'))
 
 
@@ -45,7 +46,7 @@ def setup_hyprland(source, hypr_dir, validate):
     old_rules = destination.read_bytes() if destination.exists() else None
     new_main = old_main if INCLUDE in old_main.decode() else old_main + INCLUDE_BLOCK.encode()
     # Preserve existing custom rules. Updates do not overwrite user modifications.
-    new_rules = old_rules if old_rules is not None else (source / 'hyprland.lua').read_bytes()
+    new_rules = old_rules if old_rules is not None else (source / 'config/hyprland.lua').read_bytes()
     if old_main == new_main and old_rules == new_rules:
         validate()
         return
@@ -85,7 +86,7 @@ def setup_shortcut(source, hypr_dir, validate):
     if main.exists():
         shutil.copy2(main, main.with_name(f'bindings.lua.keycorner-backup-{stamp}'))
     try:
-        atomic_write(destination, (source / 'shortcuts.lua').read_bytes())
+        atomic_write(destination, (source / 'config/shortcuts.lua').read_bytes())
         atomic_write(main, old + ('\n-- Keycorner privacy toggle.\n' + include + '\n').encode())
         validate()
     except Exception:
@@ -106,7 +107,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--setup-only', action='store_true', help='Only create settings and floating-window rules')
     args = parser.parse_args()
-    source = Path(__file__).resolve().parent
+    source = Path(__file__).resolve().parents[2]
     config_root = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config'))
     config_dir = config_root / 'omarchy'
     # Omarchy 4's plugin registry uses this fixed HOME path even with XDG_CONFIG_HOME set.

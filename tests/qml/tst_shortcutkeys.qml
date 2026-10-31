@@ -1,6 +1,6 @@
 import QtQuick
 import QtTest
-import '../../ShortcutKeys.js' as ShortcutKeys
+import '../../ui/ShortcutKeys.js' as ShortcutKeys
 
 TestCase {
     name: 'ShortcutKeys'

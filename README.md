@@ -100,7 +100,7 @@ fails. Existing settings and customized rules are preserved. No root access is
 needed by the plugin or installer.
 
 `./keycorner.sh install` builds with Cargo, copies the native runtime into the
-plugin directory and enables it. `install.py` is retained as historical Python
+plugin directory and enables it. `reference/python/install.py` is retained as historical Python
 reference; do not use it to install the Rust runtime. A packaged build can use the same
 shell installer without Cargo. See [Rust architecture and comparison](docs/RUST.md).
 
@@ -187,22 +187,24 @@ Device permissions must be configured on each machine. The runtime stays unprivi
 
 ## Development
 
+See [repository structure](docs/STRUCTURE.md) for folder responsibilities and deployment paths.
+
 - `manifest.json`: Omarchy overlay and bar-widget registration.
-- `Overlay.qml`: overlay, bridge lifecycle, settings persistence and IPC.
-- `SettingsWindow.qml`: settings controls.
-- `BarWidget.qml`: bar access.
-- `Config.js`: shared configuration validation/defaults.
-- `Backend.js`: native/Python command routing for comparison installs.
+- `ui/Overlay.qml`: overlay, bridge lifecycle, settings persistence and IPC.
+- `ui/SettingsWindow.qml`: settings controls.
+- `ui/BarWidget.qml`: bar access.
+- `ui/Config.js`: shared configuration validation/defaults.
+- `ui/Backend.js`: native/Python command routing for comparison installs.
 - `src/devices.rs`: scoped discovery and stable device selection.
 - `src/core.rs`, `data/`: layouts, labels, reports and layer suggestions.
 - `src/stream.rs`: Vial read queries, evdev decoding and blocking input loop.
 - `src/permissions.rs`: permission preview and authenticated setup.
 - `src/shortcuts.rs`, `src/setup.rs`: shortcut and installation helpers.
-- `keycorner/`, `install.py`: unchanged Python reference implementation.
+- `reference/python/`: unchanged Python reference implementation.
 - `tests/`: native tests, synthetic Python parity fixtures and UI/config tests.
 
 Run `./keycorner.sh build` to populate the local `bin/keycorner` first.
-`shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
+`ui/shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
 
 ## Releases
 

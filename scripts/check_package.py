@@ -12,6 +12,9 @@ with tarfile.open(sys.argv[1]) as archive:
     names = set(archive.getnames())
     assert all(not p.startswith('/') and '..' not in Path(p).parts for p in names)
     assert not any(p.endswith(('.vil', '.uf2', '.bin', '.py')) or '/.git/' in p for p in names)
+    manifest = json.loads(archive.extractfile('keycorner-rust/manifest.json').read())
+    for entry in manifest['entryPoints'].values():
+        assert 'keycorner-rust/' + entry in names, entry
     for member in archive.getmembers():
         assert member.isfile() or member.isdir(), 'Unexpected archive link/device'
         if member.name.endswith('.qml'):

@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import unittest
 from unittest.mock import patch
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'keycorner'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'reference/python/keycorner'))
 from standard import EVENT, Reader, layout
 from keyboard_devices import keyboard_capable, token
 from permissions import make_rule, destination

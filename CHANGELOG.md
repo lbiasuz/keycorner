@@ -4,6 +4,8 @@
 
 Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
+- Organize UI, desktop templates, Python reference and tests into dedicated folders; share the installer/package runtime inventory.
+
 - Add event-driven keyboard discovery and automatic setup for a single Vial candidate.
 - Continue setup after permission grants, preserve explicit selections, and document compatibility release gates.
 

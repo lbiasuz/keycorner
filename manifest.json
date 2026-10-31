@@ -11,8 +11,8 @@
   ],
   "keepLoaded": true,
   "entryPoints": {
-    "overlay": "Overlay.qml",
-    "barWidget": "BarWidget.qml"
+    "overlay": "ui/Overlay.qml",
+    "barWidget": "ui/BarWidget.qml"
   },
   "barWidget": {
     "displayName": "Keycorner",

@@ -5,6 +5,6 @@ function command(rootUrl, action, args) {
     if (engine === 'rust' || action === 'inspect') return [root + 'bin/keycorner', action].concat(args || [])
     var scripts = {'bridge':'bridge.py', 'theme':'bridge.py', 'devices':'keyboard_devices.py',
                    'config-init':'config_file.py', 'shortcuts':'shortcuts.py', 'permissions':'permissions.py'}
-    return ['python', '-B', '-u', root + 'keycorner/' + scripts[action]]
+    return ['python', '-B', '-u', root + 'reference/python/keycorner/' + scripts[action]]
         .concat(action === 'theme' ? ['--theme-only'] : (args || []))
 }

@@ -40,7 +40,7 @@ Item {
     function dismiss() { close() }
     function toggle() { const next = !shown || paused; sessionClosed = false; updateConfig({shown: next, paused: !next}) }
     Process {
-        command: Backend.command(Qt.resolvedUrl('.'), 'config-init')
+        command: Backend.command(Qt.resolvedUrl('..'), 'config-init')
         running: true
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) root.settingsInitialized = true
@@ -66,7 +66,7 @@ Item {
         shortcutMessage = ''
         shortcutProcess.response = ''
         shortcutProcess.applying = values !== undefined
-        shortcutProcess.command = Backend.command(Qt.resolvedUrl('.'), 'shortcuts')
+        shortcutProcess.command = Backend.command(Qt.resolvedUrl('..'), 'shortcuts')
             .concat(values === undefined ? [] : ['apply', JSON.stringify(values)])
         shortcutProcess.running = true
     }
@@ -135,7 +135,7 @@ Item {
         deviceMessage = 'Reading keyboard layout…'
         keyboardSetup.signature = captureSignature
         keyboardSetup.response = ''
-        keyboardSetup.command = Backend.command(Qt.resolvedUrl('.'), 'inspect', [config.deviceId,config.backend,config.standardLayout])
+        keyboardSetup.command = Backend.command(Qt.resolvedUrl('..'), 'inspect', [config.deviceId,config.backend,config.standardLayout])
         setupPending = true
         setupDelay.restart()
     }
@@ -183,7 +183,7 @@ Item {
         deviceMessage = ''
         deviceAction.action = action; deviceAction.deviceId = id; deviceAction.mode = mode
         deviceAction.response = ''
-        deviceAction.command = Backend.command(Qt.resolvedUrl('.'), 'permissions', [action,id,mode])
+        deviceAction.command = Backend.command(Qt.resolvedUrl('..'), 'permissions', [action,id,mode])
         deviceAction.running = true
     }
     // Kernel device notifications only: no input-event capture or periodic scans.
@@ -197,7 +197,7 @@ Item {
     onPausedChanged: if (!paused) discoveryDelay.restart()
     Process {
         id: deviceScan
-        command: Backend.command(Qt.resolvedUrl('.'), 'devices')
+        command: Backend.command(Qt.resolvedUrl('..'), 'devices')
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -357,7 +357,7 @@ Item {
     }
     Process {
         id: themeReader
-        command: Backend.command(Qt.resolvedUrl('.'), 'theme')
+        command: Backend.command(Qt.resolvedUrl('..'), 'theme')
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.palette = JSON.parse(text).theme } catch (error) {}
@@ -368,7 +368,7 @@ Item {
     onAutomaticChanged: if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
     Process {
         id: bridge
-        command: Backend.command(Qt.resolvedUrl('.'), 'bridge', ['--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : []))
+        command: Backend.command(Qt.resolvedUrl('..'), 'bridge', ['--backend', root.config.backend, '--preset', root.config.standardLayout].concat(root.config.deviceId ? ['--device',root.config.deviceId] : []))
         running: root.captureEnabled && root.retryGeneration >= 0
         stdinEnabled: true
         onStarted: { root.bridgeAlive = true; bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n') }

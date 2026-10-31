@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-const source = fs.readFileSync('Config.js','utf8');
+const source = fs.readFileSync('ui/Config.js','utf8');
 const c = vm.createContext({}); vm.runInContext(source,c);
 assert.equal(c.normalize({}).opacity,.78);
 assert.equal(c.normalize({opacity:0}).opacity,.15);

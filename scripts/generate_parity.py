@@ -2,7 +2,7 @@
 import hashlib, json, lzma, random, sys
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(root/'keycorner'))
+sys.path.insert(0,str(root/'reference/python/keycorner'))
 import core, shortcuts, permissions, standard
 for preset in ("ansi104", "ansi87", "ansi60"):
  assert json.loads((root/"data"/(preset+".json")).read_text()) == standard.layout(preset), preset

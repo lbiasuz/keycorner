@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 import unittest
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'keycorner'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'reference/python/keycorner'))
 from core import Vial, model, label, parse_report, infer_layer, geometry
 
 class KeyboardTests(unittest.TestCase):

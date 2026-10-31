@@ -20,4 +20,6 @@ keyboard. Review fixture changes rather than accepting regenerated expectations 
 
 Use `./keycorner.sh install --engine python` or `--engine rust` from this checkout
 for a comparison install. Restart the Omarchy shell if it caches the previous
-Backend.js. Never run two bridges against the same Vial interface concurrently.
+ui/Backend.js. Never run two bridges against the same Vial interface concurrently.
+
+See [repository structure](docs/STRUCTURE.md). Add production UI/templates to `packaging/runtime-files.txt`; both the native installer and release packager consume that inventory. Keep Python comparison code under `reference/python/`.

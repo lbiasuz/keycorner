@@ -36,7 +36,7 @@ jobs:
       - name: Native release archive smoke check
         run: ./scripts/package.sh
       - name: Compile Python sources
-        run: python -m compileall -q keycorner install.py tests
+        run: python -m compileall -q reference/python tests
       - name: Check manifest and license
         run: |
           python - <<'PY'
