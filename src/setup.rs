@@ -94,20 +94,15 @@ fn setup_include(
 }
 pub fn install(args: &[String]) -> Result<()> {
     let mut source = std::env::current_dir()?;
-    let mut engine = "rust";
     let mut setup_only = false;
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
         match arg.as_str() {
             "--source" => source = iter.next().ok_or("Missing source")?.into(),
-            "--engine" => engine = iter.next().ok_or("Missing engine")?,
             "--setup-only" => setup_only = true,
             _ => return err("Unknown installer option"),
         }
     }
-    if !matches!(engine, "rust" | "python") {
-        return err("Engine must be rust or python");
-    };
     let source = source.canonicalize()?;
     let target = crate::home()?.join(".config/omarchy/plugins/lbiasuz.keycorner");
     run(
@@ -135,25 +130,6 @@ pub fn install(args: &[String]) -> Result<()> {
         if executable != destination {
             atomic(&destination, &fs::read(executable)?, 0o755)?;
         }
-        if engine == "python" {
-            fs::create_dir_all(target.join("reference/python/keycorner"))?;
-            for entry in fs::read_dir(source.join("reference/python/keycorner"))? {
-                let entry = entry?;
-                if entry.path().extension().is_some_and(|e| e == "py") {
-                    atomic(
-                        &target
-                            .join("reference/python/keycorner")
-                            .join(entry.file_name()),
-                        &fs::read(entry.path())?,
-                        0o644,
-                    )?;
-                }
-            }
-        }
-        let runtime = fs::read_to_string(source.join("ui/Backend.js"))?
-            .replace("var engine = 'python'", "var engine = 'rust'")
-            .replace("var engine = 'rust'", &format!("var engine = '{engine}'"));
-        atomic(&target.join("ui/Backend.js"), runtime.as_bytes(), 0o644)?;
     }
     config_init()?;
     let hypr = crate::config_root()?.join("hypr");

@@ -20,7 +20,7 @@ def pids():
   try:args=(path/'cmdline').read_bytes().split(b'\0')
   except OSError:continue
   if any(x==b'/usr/share/omarchy/shell' for x in args) and b'quickshell' in args[0]:shell.append(int(path.name))
-  if any(x.endswith(b'/lbiasuz.keycorner/reference/python/keycorner/bridge.py') for x in args) or (args[0].endswith(b'/lbiasuz.keycorner/bin/keycorner') and b'bridge' in args):bridge.append(int(path.name))
+  if (args[0].endswith(b'/lbiasuz.keycorner/bin/keycorner') and b'bridge' in args):bridge.append(int(path.name))
  return {'shell':shell,'bridge':bridge}
 def sample(pid):
  root=Path('/proc')/str(pid)

@@ -4,7 +4,7 @@
 
 **v0.6.0 release candidate · private preparation · MIT desktop plugin · Omarchy 4 / Hyprland Lua**
 
-A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo runtime replaces the Python backend and setup helpers with one native executable. The QML interface is shared with the Python reference.
+A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo runtime replaces the Python backend and setup helpers with one native executable. The historical Python implementation is preserved on the [`python-reference` branch](https://github.com/lbiasuz/keycorner/tree/python-reference).
 
 ## Use
 
@@ -67,7 +67,7 @@ Omarchy's current palette is applied automatically, including while HID capture 
 Targets x86_64 Omarchy Linux.
 Rust mode requires libc, libgcc_s and liblzma; it does not require Python. Building
 from source needs Rust/Cargo 1.88+, a C toolchain, pkg-config and liblzma development
-files. Python 3.11+ and Node.js are reference/test dependencies only.
+files. Python 3.12+ is used by release-checking tools, and Node.js by configuration tests; neither is a runtime dependency.
 
 **Standard mode supports ordinary Linux keyboards without Vial or QMK.** Select
 one keyboard in Settings and choose a US ANSI full-size, TKL or 60% preset.
@@ -100,8 +100,7 @@ fails. Existing settings and customized rules are preserved. No root access is
 needed by the plugin or installer.
 
 `./keycorner.sh install` builds with Cargo, copies the native runtime into the
-plugin directory and enables it. `reference/python/install.py` is retained as historical Python
-reference; do not use it to install the Rust runtime. A packaged build can use the same
+plugin directory and enables it. The historical Python installer is preserved only on `python-reference`. A packaged build can use the same
 shell installer without Cargo. See [Rust architecture and comparison](docs/RUST.md).
 
 For source-built installations, pull changes and rerun `./keycorner.sh install`.
@@ -194,13 +193,13 @@ See [repository structure](docs/STRUCTURE.md) for folder responsibilities and de
 - `ui/SettingsWindow.qml`: settings controls.
 - `ui/BarWidget.qml`: bar access.
 - `ui/Config.js`: shared configuration validation/defaults.
-- `ui/Backend.js`: native/Python command routing for comparison installs.
+- `ui/Backend.js`: command routing to the native runtime.
 - `src/devices.rs`: scoped discovery and stable device selection.
 - `src/core.rs`, `data/`: layouts, labels, reports and layer suggestions.
 - `src/stream.rs`: Vial read queries, evdev decoding and blocking input loop.
 - `src/permissions.rs`: permission preview and authenticated setup.
 - `src/shortcuts.rs`, `src/setup.rs`: shortcut and installation helpers.
-- `reference/python/`: unchanged Python reference implementation.
+- `python-reference` branch: archived Python implementation, tests and parity generator.
 - `tests/`: native tests, synthetic Python parity fixtures and UI/config tests.
 
 Run `./keycorner.sh build` to populate the local `bin/keycorner` first.

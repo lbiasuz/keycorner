@@ -27,7 +27,7 @@ jobs:
           cargo fmt --check
           cargo clippy --locked --all-targets -- -D warnings
           cargo build --locked --release
-      - name: Python and configuration tests
+      - name: Rust and configuration tests
         run: ./keycorner.sh test
       - name: Firmware layer protocol tests
         run: |
@@ -36,7 +36,7 @@ jobs:
       - name: Native release archive smoke check
         run: ./scripts/package.sh
       - name: Compile Python sources
-        run: python -m compileall -q reference/python tests
+        run: python -m compileall -q scripts firmware/crosses
       - name: Check manifest and license
         run: |
           python - <<'PY'

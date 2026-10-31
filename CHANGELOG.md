@@ -4,6 +4,7 @@
 
 Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
+- Archive the unused Python implementation, tests and parity generator on `python-reference`; keep `main` Rust-only.
 - Organize UI, desktop templates, Python reference and tests into dedicated folders; share the installer/package runtime inventory.
 
 - Add event-driven keyboard discovery and automatic setup for a single Vial candidate.

@@ -18,6 +18,6 @@ case "${1:-settings}" in
   stop|disable) exec omarchy plugin disable lbiasuz.keycorner ;;
   settings|toggleSettings|toggle|pause|auto|passthrough|state|reload) exec omarchy-shell keycorner "$1" ;;
   layer|corner|scale|monitor|opacity|configure) exec omarchy-shell keycorner "$1" "${2:?Missing value}" ;;
-  test) cd "$project_dir"; cargo test --locked; python scripts/generate_parity.py --check; python -m unittest discover -s tests/python -v; exec node tests/js/test_config.cjs ;;
-  *) echo 'Usage: keycorner.sh [install [--engine rust|python]|build|enable|disable|settings|toggleSettings|toggle|pause|state|auto|passthrough|layer N|corner bottom-left|scale 34|opacity 0.78|monitor NAME|configure JSON|test]'; exit 2 ;;
+  test) cd "$project_dir"; cargo test --locked; exec node tests/js/test_config.cjs ;;
+  *) echo 'Usage: keycorner.sh [install|build|enable|disable|settings|toggleSettings|toggle|pause|state|auto|passthrough|layer N|corner bottom-left|scale 34|opacity 0.78|monitor NAME|configure JSON|test]'; exit 2 ;;
 esac
