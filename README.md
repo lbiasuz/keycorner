@@ -78,8 +78,7 @@ a compatible raw HID interface, verifies the Vial response, and reads the physic
 layout and keymaps. Keyboard and consumer input reports are decoded from their
 HID descriptors, including report IDs. Unsupported protocols, rotated layouts and
 unsupported report fields produce a setup error; Standard mode remains available.
-QMK/VIA alone does not imply Vial layout discovery. Exact layer telemetry still
-needs firmware support. See [keyboard setup](docs/KEYBOARD_ACCESS.md).
+QMK/VIA alone does not imply Vial layout discovery. Exact layer reporting requires the optional firmware integration. See [keyboard setup](docs/KEYBOARD_ACCESS.md).
 
 ## Install / update
 
@@ -165,7 +164,7 @@ All configuration changes persist. Native IPC uses `omarchy-shell keycorner <met
 
 In Vial mode, at each input-process startup, the bridge downloads the actual physical layout and available keymaps. It highlights standard HID key output, modifiers, and common media keys, including the board's NKRO reports. Dual-role labels show tap and hold functions using the keyboard’s reported Vial protocol, including legacy home-row modifiers. Disconnects clear highlights and trigger reconnection. Pause and resume after remapping in Vial; close Vial first to avoid competing raw-HID transactions.
 
-**The current firmware does not report its active layer.** Layer chips select a saved layout. The `≈` button enables conservative layer suggestions, not firmware-reported state. Suggestions return to the reference preview when that evidence disappears. Silent layer switches, tap-toggle timing, automatic mouse layers, combos, and the complete stack of transparent layers cannot be reliably inferred. Exact live layers and physical-switch telemetry remain a future firmware integration, as requested.
+**Exact live layers are available with the experimental [CSTC40 firmware integration](firmware/cstc40/README.md).** The Rust bridge discovers support automatically and follows firmware layer masks, including transparent-key fallthrough. While capturing, live state takes precedence over the manual preview; a solid dot replaces the approximation button. Other keyboards retain manual layer previews and optional conservative suggestions. Firmware reports contain layer masks only, not physical switch positions; key highlighting still uses ordinary keyboard output reports. Firmware installation is separate from plugin installation.
 
 HID reports output keycodes rather than physical switches. Duplicate mappings may highlight multiple positions. A held mod-tap can emit a modifier without revealing its position. Shifted and unshifted mappings may share an output usage. Modifier-only reports never trigger layer suggestions.
 

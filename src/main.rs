@@ -2,6 +2,7 @@ mod core;
 mod devices;
 mod hid;
 mod keycodes;
+mod layers;
 mod permissions;
 mod setup;
 mod shortcuts;

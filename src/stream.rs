@@ -19,7 +19,7 @@ fn open(path: &str, write: bool) -> Result<File> {
         .custom_flags(libc::O_NONBLOCK | libc::O_CLOEXEC)
         .open(path)?)
 }
-fn poll(fds: &[RawFd], timeout: i32) -> Result<Vec<usize>> {
+pub(crate) fn poll(fds: &[RawFd], timeout: i32) -> Result<Vec<usize>> {
     let mut poll: Vec<_> = fds
         .iter()
         .map(|fd| libc::pollfd {
@@ -116,6 +116,7 @@ fn snapshot(path: &str) -> Result<Value> {
         .collect();
     let mut layout = core::model_protocol(&d, layers, &codes, protocol)?;
     layout["protocol"] = json!(protocol);
+    layout["customKeycodes"] = d["customKeycodes"].clone();
     layout["source"] = json!("vial");
     Ok(layout)
 }
@@ -218,6 +219,7 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
         supported[0].clone()
     };
     let mut inputs = Vec::new();
+    let mut live = None;
     let layout = if backend == "standard" {
         let layout = core::standard(preset)?;
         for node in device["events"].as_array().ok_or("No input interfaces")? {
@@ -248,7 +250,12 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
         if !interfaces.iter().any(|(_, d)| d.keyboard()) {
             return err("Keyboard reports are unsupported; choose Standard mode");
         }
-        let layout = snapshot(devices::vial_path(&interfaces)?)?;
+        let raw_path = devices::vial_path(&interfaces)?;
+        let layout = snapshot(raw_path)?;
+        live = crate::layers::Live::connect(
+            open(raw_path, true)?,
+            layout["layers"].as_u64().unwrap_or(0) as usize,
+        )?;
         for (path, descriptor) in interfaces {
             if descriptor.readable() {
                 inputs.push(Input {
@@ -267,6 +274,9 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
     };
     let mut current_theme = theme();
     emit(&json!({"type":"layout","layout":layout,"theme":current_theme}))?;
+    if let Some(live) = &live {
+        emit(&crate::layers::message(&layout, live.state))?;
+    }
     let mut previous = Value::Null;
     let mut suggest = true;
     let mut control = Vec::new();
@@ -276,10 +286,14 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
         emit(&previous)?;
     }
     loop {
-        let fds: Vec<_> = std::iter::once(0)
+        let mut fds: Vec<_> = std::iter::once(0)
             .chain(inputs.iter().map(|i| i.file.as_raw_fd()))
             .collect();
-        let ready = poll(&fds, -1)?;
+        let layer_index = fds.len();
+        if let Some(live) = &live {
+            fds.push(live.file.as_raw_fd());
+        }
+        let ready = poll(&fds, live.as_ref().map_or(-1, |l| l.timeout()))?;
         let mut changed = false;
         if ready.contains(&0) {
             if !control_read(&mut control)? {
@@ -307,7 +321,17 @@ fn connected(device_id: Option<&str>, backend: &str, preset: &str) -> Result<boo
                 }
             }
         }
-        for index in ready.into_iter().filter(|i| *i > 0).map(|i| i - 1) {
+        if let Some(live) = &mut live {
+            if ready.contains(&layer_index) && live.receive()? {
+                emit(&crate::layers::message(&layout, live.state))?;
+            }
+            live.renew()?;
+        }
+        for index in ready
+            .into_iter()
+            .filter(|i| *i > 0 && *i < layer_index)
+            .map(|i| i - 1)
+        {
             for _ in 0..256 {
                 let mut data = [0u8; 1536];
                 let size = if backend == "standard" {

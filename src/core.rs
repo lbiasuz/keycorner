@@ -211,7 +211,7 @@ fn model_inner(d: &Value, layers: usize, codes: &[u16], protocol: Option<u32>) -
         height = height.max(k["y"].as_f64().unwrap() + k["h"].as_f64().unwrap());
     }
     Ok(
-        json!({"name":string(&d["name"] )?,"layers":layers,"keys":keys,"width":width,"height":height}),
+        json!({"name":d["name"].as_str().filter(|s| !s.is_empty()).unwrap_or("Vial keyboard"),"layers":layers,"keys":keys,"width":width,"height":height}),
     )
 }
 #[cfg(test)]

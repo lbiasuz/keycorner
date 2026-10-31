@@ -376,3 +376,12 @@ fn protocol_model_uses_tap_outputs_and_custom_names() {
     }
     assert_eq!(keycodes::label(0x5f81, &custom, 5), "User 1");
 }
+
+#[test]
+fn vial_layout_name_is_optional() {
+    let definition =
+        serde_json::json!({"matrix":{"rows":1,"cols":1},"layouts":{"keymap":[["0,0"]]}});
+    let layout = crate::core::model_protocol(&definition, 1, &[4], 6).unwrap();
+    assert_eq!(layout["name"], "Vial keyboard");
+    assert_eq!(layout["keys"][0]["labels"][0], "A");
+}

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Optional CSTC40 single-PCB firmware reports live QMK layer masks through a leased Vial raw-HID extension.
+- Rust overlay follows exact layers and resolves transparent keys against the enabled stack.
+- Unsupported keyboards retain existing behavior; capture pause and lock guards still close input access.
+- Firmware source, pinned build recipe, protocol documentation and lease tests are separate from plugin runtime dependencies.
+
+
 ## 0.5.0 — Keyboard setup
 
 - Remove vendor/product restrictions from the Rust Vial runtime and device-scoped rules.

@@ -197,7 +197,7 @@ Item {
         }
     }
     readonly property string captureSignature: config.backend + ':' + config.deviceId + ':' + config.standardLayout
-    onCaptureSignatureChanged: { deviceMessage = ''; status = 'Connect and set up this keyboard in Settings'; pressed = []; estimate = -1; layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
+    onCaptureSignatureChanged: { deviceMessage = ''; status = 'Connect and set up this keyboard in Settings'; pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0}); layout = {keys:[],layers:0,width:14.25,height:6}; backendRestart.restart() }
     Timer { id: backendRestart; interval: 100; onTriggered: {} }
     SettingsWindow { controller: root; visible: root.settingsOpen }
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
@@ -205,6 +205,9 @@ Item {
     property var pressed: []
     readonly property int preview: Math.min(config.previewLayer, Math.max(0, layout.layers-1))
     property int estimate: -1
+    property int firmwareLayer: -1
+    property var firmwareKeys: []
+    property var firmwareMasks: ({layers:0,defaultLayers:0})
     readonly property bool automatic: config.backend === 'vial' && config.suggestLayers
     readonly property bool paused: config.paused
     readonly property bool shown: config.shown && !sessionClosed
@@ -226,11 +229,11 @@ Item {
     readonly property color translucentKey: Qt.rgba(keySurface.r, keySurface.g, keySurface.b, translucency)
     property string status: 'Select a keyboard in Settings'
     property bool connected: false
-    readonly property int activeLayer: automatic && estimate >= 0 ? estimate : preview
+    readonly property int activeLayer: firmwareLayer >= 0 ? firmwareLayer : (automatic && estimate >= 0 ? estimate : preview)
     function color(name, fallback) { return palette[name] || fallback }
     function pause() {
         updateConfig({paused: !paused})
-        pressed = []; estimate = -1
+        pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0})
         if (paused) status = 'Paused · input access stopped'
     }
     function consume(line) {
@@ -241,11 +244,16 @@ Item {
                 layout = msg.layout; connected = true
                 if (bridge.running) bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n')
                 status = msg.layout.source === 'standard' ? 'Standard keyboard connected' : 'Vial keyboard connected'
+            } else if (msg.type === 'layers') {
+                if (!Number.isInteger(msg.layer) || msg.layer < 0 || msg.layer >= layout.layers || !Array.isArray(msg.keys) || msg.keys.length !== layout.keys.length) return
+                firmwareLayer = msg.layer; firmwareKeys = msg.keys
+                firmwareMasks = {layers:msg.layerMask,defaultLayers:msg.defaultLayerMask}
+                status = 'Vial keyboard connected · live layers'
             } else if (msg.type === 'state') {
                 pressed = msg.pressed
                 estimate = msg.estimate === null ? -1 : msg.estimate
             } else if (msg.type === 'error') {
-                status = msg.message; connected = false; pressed = []; estimate = -1
+                status = msg.message; connected = false; pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0})
             }
         } catch (error) { status = 'Could not read keyboard state'; connected = false }
     }
@@ -291,7 +299,7 @@ Item {
     readonly property bool sessionSafe: applicationFocused && unlockedConfirmed
     readonly property bool captureEnabled: configReady && !configError && shown && !panel.minimized && !paused && sessionSafe && !deviceBusy && !permissionPlan && !backendRestart.running && (config.deviceId !== '' || config.backend === 'vial')
     onCaptureEnabledChanged: {
-        pressed = []; estimate = -1
+        pressed = []; estimate = -1; firmwareLayer = -1; firmwareKeys = []; firmwareMasks = ({layers:0,defaultLayers:0})
         if (!captureEnabled) status = !sessionSafe ? 'Session protected · input access stopped' : paused ? 'Paused · input access stopped' : 'Hidden · input access stopped'
     }
     // Theme loading must not depend on the keyboard connection or capture state.
@@ -327,7 +335,7 @@ Item {
         onStarted: { root.bridgeAlive = true; bridge.write(root.automatic ? 'suggest:1\n' : 'suggest:0\n') }
         stdout: SplitParser { onRead: data => root.consume(data) }
         onExited: {
-            root.bridgeAlive = false; root.pressed = []; root.estimate = -1; root.connected = false
+            root.bridgeAlive = false; root.pressed = []; root.estimate = -1; root.firmwareLayer = -1; root.firmwareKeys = []; root.firmwareMasks = ({layers:0,defaultLayers:0}); root.connected = false
             if (root.captureEnabled) { root.status = 'Bridge stopped · retrying'; retry.restart() }
         }
     }
@@ -340,7 +348,7 @@ Item {
         function setupKeyboard(): void { root.setupKeyboard() }
         function toggleSettings(): void { root.settingsOpen = !root.settingsOpen }
         function closeSettings(): void { root.settingsOpen = false }
-        function state(): string { return JSON.stringify({implementation:Backend.engine, config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, status:root.status, deviceMessage:root.deviceMessage, deviceBusy:root.deviceBusy, layers:root.layout.layers, keys:root.layout.keys.length}) }
+        function state(): string { return JSON.stringify({implementation:Backend.engine,firmwareLayer:root.firmwareLayer,firmwareMasks:root.firmwareMasks, config:root.config, error:root.configError, connected:root.connected, capture:root.captureEnabled, sessionSafe:root.sessionSafe, settingsOpen:root.settingsOpen, applicationFocused:root.applicationFocused, status:root.status, deviceMessage:root.deviceMessage, deviceBusy:root.deviceBusy, layers:root.layout.layers, keys:root.layout.keys.length}) }
         function configure(json: string): void {
             try { root.updateConfig(JSON.parse(json)) } catch (error) { console.warn('Invalid Keycorner settings') }
         }
@@ -426,15 +434,15 @@ Item {
                         width: 28; height: 24; radius: 5
                         color: root.activeLayer === index ? root.palette.accent : root.translucentKey
                         Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: 'L'+index; color: root.activeLayer === index ? root.palette.background : root.palette.foreground; font { family: 'monospace'; pixelSize: 11; bold: true } }
-                        MouseArea { anchors.fill: parent; onClicked: { root.updateConfig({previewLayer:index,suggestLayers:false}) } }
+                        MouseArea { anchors.fill: parent; enabled: root.firmwareLayer < 0; onClicked: { root.updateConfig({previewLayer:index,suggestLayers:false}) } }
                     }
                 }
                 Rectangle {
                     width: 25; height: 24; radius: 5
                     color: root.translucentKey
                     border.width: root.automatic ? 1 : 0; border.color: root.palette.accent
-                    Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: '≈'; color: root.palette.foreground; font.pixelSize: 10 }
-                    MouseArea { anchors.fill: parent; onClicked: root.updateConfig({suggestLayers:!root.automatic}) }
+                    Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: root.firmwareLayer >= 0 ? '●' : '≈'; color: root.palette.foreground; font.pixelSize: 10 }
+                    MouseArea { anchors.fill: parent; enabled: root.firmwareLayer < 0; onClicked: root.updateConfig({suggestLayers:!root.automatic}) }
                 }
             }
             Column {
@@ -456,7 +464,9 @@ Item {
                     model: root.layout.keys
                     Rectangle {
                         required property var modelData
-                        readonly property int code: modelData.usages[root.activeLayer] || 0
+                        required property int index
+                        readonly property var liveKey: root.firmwareLayer >= 0 ? root.firmwareKeys[index] : null
+                        readonly property int code: liveKey ? (liveKey.usage || 0) : (modelData.usages[root.activeLayer] || 0)
                         readonly property bool down: code > 0 && root.pressed.includes(code)
                         x: modelData.x * root.unit; y: modelData.y * root.unit
                         width: modelData.w * root.unit - 3; height: modelData.h * root.unit - 3
@@ -467,7 +477,7 @@ Item {
                         Text { textFormat: Text.PlainText;
                             anchors { fill: parent; margins: 2 }
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                            text: modelData.labels[root.activeLayer] || '—'
+                            text: parent.liveKey ? parent.liveKey.label : (modelData.labels[root.activeLayer] || '—')
                             color: parent.down ? root.palette.background : root.palette.foreground
                             font { family: 'monospace'; pixelSize: root.unit * 0.29; bold: parent.down }
                             fontSizeMode: Text.Fit; minimumPixelSize: 7

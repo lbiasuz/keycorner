@@ -1,7 +1,7 @@
 name: Checks
 on:
   push:
-    branches: [main, rust-backend]
+    branches: [main, rust-backend, firmware-layer-reporting]
   pull_request:
 permissions:
   contents: read
@@ -29,6 +29,10 @@ jobs:
           cargo build --locked --release
       - name: Python and configuration tests
         run: ./keycorner.sh test
+      - name: Firmware layer protocol tests
+        run: |
+          cc -Wall -Wextra -Werror -DQMK_KEYBOARD_H='"fake_qmk.h"' -I tests/firmware tests/firmware/layers_test.c -o /tmp/keycorner-firmware-test
+          /tmp/keycorner-firmware-test
       - name: Compile Python sources
         run: python -m compileall -q keycorner install.py tests
       - name: Check manifest and license
