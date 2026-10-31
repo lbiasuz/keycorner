@@ -28,4 +28,10 @@ TestCase {
     function test_standard_unchanged() {
         compare(Highlight.keys([key(0x0220,32)],0,null,[32],'standard'),[true])
     }
+    function test_active_modifier_holds() {
+        compare(Highlight.modifiers([4,227,229],'vial').map(function(m) { return m.label }),['Super','RShift'])
+        compare(Highlight.modifiers([42,97,125],'standard').map(function(m) { return m.label }),['Shift','Super','RCtrl'])
+        compare(Highlight.modifiers([4,32],'vial'),[])
+        compare(Highlight.modifiers([],'vial'),[])
+    }
 }

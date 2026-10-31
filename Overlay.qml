@@ -204,6 +204,7 @@ Item {
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
     property var palette: ({background: '#faf4ed', foreground: '#575279', accent: '#56949f', muted: '#cecacd', lighter_background: '#f2e9e1', dark_foreground: '#9893a5'})
     property var pressed: []
+    readonly property var activeModifiers: Highlight.modifiers(pressed, config.backend)
     readonly property var highlighted: Highlight.keys(layout.keys, activeLayer, firmwareLayer >= 0 ? firmwareKeys : null, pressed, config.backend)
     readonly property int preview: Math.min(config.previewLayer, Math.max(0, layout.layers-1))
     property int estimate: -1
@@ -445,6 +446,30 @@ Item {
                     border.width: root.automatic ? 1 : 0; border.color: root.palette.accent
                     Text { textFormat: Text.PlainText; anchors.centerIn: parent; text: root.firmwareLayer >= 0 ? '●' : '≈'; color: root.palette.foreground; font.pixelSize: 10 }
                     MouseArea { anchors.fill: parent; enabled: root.firmwareLayer < 0; onClicked: root.updateConfig({suggestLayers:!root.automatic}) }
+                }
+            }
+            Row {
+                anchors { right: parent.right; rightMargin: 16 }
+                y: 35
+                spacing: 4
+                visible: root.activeModifiers.length > 0
+                Repeater {
+                    model: root.activeModifiers
+                    Rectangle {
+                        required property var modelData
+                        width: modifierLabel.implicitWidth + 10
+                        height: 15
+                        radius: 3
+                        color: root.palette.accent
+                        Text {
+                            id: modifierLabel
+                            anchors.centerIn: parent
+                            textFormat: Text.PlainText
+                            text: modelData.label
+                            color: root.palette.background
+                            font { family: 'monospace'; pixelSize: 9; bold: true }
+                        }
+                    }
                 }
             }
             Column {

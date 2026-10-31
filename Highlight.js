@@ -30,3 +30,14 @@ function keys(layoutKeys, layer, liveKeys, pressed, backend) {
     }
     return candidates.map(function(c) { return c.match && c.score === best[c.usage] })
 }
+
+// Active output modifiers, including holds produced by dual-role keys.
+function modifiers(pressed, backend) {
+    var codes = backend === 'standard' ? [29,42,56,125,97,54,100,126] : [224,225,226,227,228,229,230,231]
+    var labels = ['Ctrl','Shift','Alt','Super','RCtrl','RShift','AltGr','RSuper']
+    var active = []
+    for (var i = 0; i < codes.length; ++i) {
+        if (pressed.indexOf(codes[i]) >= 0) active.push({label:labels[i],bit:1 << i,usage:codes[i]})
+    }
+    return active
+}
