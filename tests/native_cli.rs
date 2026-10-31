@@ -176,3 +176,73 @@ fn parent_eof_stops_reconnect_wait() {
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
 }
+
+#[test]
+fn marketplace_bootstrap_without_cargo_is_repeatable_and_checks_architecture() {
+    let s = Sandbox::new();
+    s.helper("omarchy", "exit 0");
+    s.helper("cargo", "exit 99");
+    s.helper(
+        "hyprctl",
+        r#"echo "$1" >> "$HOME/hypr-calls"
+case "$1" in
+-j) echo '[]';;
+configerrors) echo ok;;
+esac"#,
+    );
+    let source = s.0.join("plugin");
+    fs::create_dir_all(source.join("bin")).unwrap();
+    fs::create_dir(source.join("config")).unwrap();
+    let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for file in [
+        "keycorner.sh",
+        "config/hyprland.lua",
+        "config/shortcuts.lua",
+    ] {
+        fs::copy(repo.join(file), source.join(file)).unwrap();
+    }
+    fs::write(s.0.join("config/hypr/hyprland.lua"), "-- user config\n").unwrap();
+    let invoke = || {
+        let mut command = s.command();
+        // Use the same isolated environment, but run the real bootstrap script.
+        let envs: Vec<_> = command
+            .get_envs()
+            .map(|(k, v)| (k.to_owned(), v.unwrap().to_owned()))
+            .collect();
+        command = Command::new("bash");
+        command
+            .envs(envs)
+            .arg(source.join("keycorner.sh"))
+            .arg("bootstrap")
+            .output()
+            .unwrap()
+    };
+    let missing = invoke();
+    assert!(!missing.status.success());
+    assert!(String::from_utf8_lossy(&missing.stdout).contains("executable missing"));
+    fs::copy(
+        env!("CARGO_BIN_EXE_keycorner"),
+        source.join("bin/keycorner"),
+    )
+    .unwrap();
+    let first = invoke();
+    assert!(
+        first.status.success(),
+        "{}",
+        String::from_utf8_lossy(&first.stdout)
+    );
+    let config = s.0.join("config/omarchy/keycorner.json");
+    fs::write(&config, "{\"version\":1,\"shown\":false,\"paused\":true}\n").unwrap();
+    fs::write(s.0.join("hypr-calls"), "").unwrap();
+    assert!(invoke().status.success());
+    assert_eq!(fs::read_to_string(s.0.join("hypr-calls")).unwrap(), "");
+    assert!(
+        fs::read_to_string(config)
+            .unwrap()
+            .contains("\"paused\":true")
+    );
+    s.helper("uname", "echo aarch64");
+    let unsupported = invoke();
+    assert!(!unsupported.status.success());
+    assert!(String::from_utf8_lossy(&unsupported.stdout).contains("x86_64"));
+}

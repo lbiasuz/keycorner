@@ -57,7 +57,7 @@ fn setup_include(
         .concat()
     };
     if original == updated && old.is_some() {
-        return shortcuts::validate();
+        return Ok(());
     }
     if original != updated {
         atomic(

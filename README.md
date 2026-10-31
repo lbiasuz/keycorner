@@ -83,7 +83,7 @@ QMK/VIA alone does not imply Vial layout discovery. Exact layer reporting requir
 
 ## Install / update
 
-The repository is private and v0.6.0 is prepared as a draft release; publication is deferred. Authorized collaborators can install from source or use the attached native x86_64 archive on the [draft releases page](https://github.com/lbiasuz/keycorner/releases). The archive includes the executable and needs no Rust/Cargo installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. It targets current Omarchy/Arch Linux, not arbitrary older distributions.
+The repository is private and v0.6.0 is prepared as a draft release; publication is deferred. Authorized collaborators can install from a checkout or use the attached native x86_64 archive on the [draft releases page](https://github.com/lbiasuz/keycorner/releases). The archive includes the executable and needs no Rust/Cargo installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. It targets current Omarchy/Arch Linux, not arbitrary older distributions.
 
 ```sh
 git clone https://github.com/lbiasuz/keycorner.git
@@ -99,12 +99,9 @@ original file, validates the configuration and rolls back its edits if validatio
 fails. Existing settings and customized rules are preserved. No root access is
 needed by the plugin or installer.
 
-`./keycorner.sh install` builds with Cargo, copies the native runtime into the
-plugin directory and enables it. The historical Python installer is preserved only on `python-reference`. A packaged build can use the same
-shell installer without Cargo. See [Rust architecture and comparison](docs/RUST.md).
+`./keycorner.sh install` copies the bundled native runtime into the plugin directory and enables it, without Cargo or Python. To rebuild from source first, run `./keycorner.sh build`. The historical Python installer is preserved only on `python-reference`. See [Rust architecture and comparison](docs/RUST.md).
 
-For source-built installations, pull changes and rerun `./keycorner.sh install`.
-A Git-only plugin update does not rebuild the native executable.
+Git-managed Omarchy installations include `bin/keycorner` and update the executable together with the UI. First enable completes desktop setup before capture begins. Updates preserve settings, customized shortcuts and rules. For manually copied installations, pull changes and rerun `./keycorner.sh install`.
 If Omarchy retains cached QML, use `omarchy restart shell` after saving your work.
 Enabled plugins start with Omarchy; visibility and pause settings govern capture.
 The current dragged position and resized dimensions are session-only.
@@ -202,7 +199,7 @@ See [repository structure](docs/STRUCTURE.md) for folder responsibilities and de
 - `python-reference` branch: archived Python implementation, tests and parity generator.
 - `tests/`: native tests, synthetic Python parity fixtures and UI/config tests.
 
-Run `./keycorner.sh build` to populate the local `bin/keycorner` first.
+`bin/keycorner` is bundled for x86_64 Linux. Maintainers run `./keycorner.sh build` to refresh it after Rust changes.
 `ui/shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
 
 ## Releases

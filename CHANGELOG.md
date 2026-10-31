@@ -4,6 +4,8 @@
 
 Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
+- Bundle the native x86_64 runtime for Git-based marketplace installs, with source/checksum validation and idempotent first-enable desktop setup.
+
 - Archive the unused Python implementation, tests and parity generator on `python-reference`; keep `main` Rust-only.
 - Organize UI, desktop templates, Python reference and tests into dedicated folders; share the installer/package runtime inventory.
 

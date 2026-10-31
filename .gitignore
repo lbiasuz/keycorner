@@ -21,4 +21,5 @@ backups/
 dist/
 
 /target/
-/bin/
+/bin/*
+!/bin/keycorner

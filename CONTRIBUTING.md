@@ -22,3 +22,5 @@ rather than regenerating them blindly.
 See [repository structure](docs/STRUCTURE.md). Add production UI/templates to
 `packaging/runtime-files.txt`; both the native installer and release packager consume
 that inventory. `main` supports only the Rust runtime.
+
+After changing Rust sources, embedded data, Cargo files or the runtime inventory, run `./scripts/prepare-native.sh` and commit `bin/keycorner` plus `packaging/native.json` with the sources. CI rejects stale bundles. Checksums detect drift, not malicious maintainers; review binaries and source provenance before distribution.

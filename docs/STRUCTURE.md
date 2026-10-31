@@ -5,6 +5,7 @@ keycorner/
 ├── manifest.json              # Omarchy plugin registration (must stay at root)
 ├── Cargo.toml / Cargo.lock    # Rust package and pinned dependencies
 ├── keycorner.sh               # Stable install/build/control/test entry point
+├── bin/keycorner             # Bundled, tracked x86_64 runtime
 ├── src/                      # Production Rust runtime and installer
 ├── ui/                       # QML windows, bar widget and JavaScript helpers
 │   └── shell.qml             # Standalone development harness
@@ -20,6 +21,7 @@ keycorner/
 │   ├── qml/                  # Qt shortcut/highlight tests
 │   └── firmware/             # Native C protocol tests with fake QMK headers
 ├── packaging/
+│   ├── native.json           # Binary checksum, version and source fingerprint
 │   └── runtime-files.txt     # Shared native installer/archive file inventory
 ├── scripts/                  # Packaging, archive checks and profiling tools
 ├── docs/                     # Architecture, compatibility, security and release guides
@@ -38,12 +40,12 @@ The root manifest points to `ui/Overlay.qml` and `ui/BarWidget.qml`. UI componen
 
 ## Generated and private material
 
-`target/`, `bin/`, `dist/` and Python bytecode caches are generated and ignored by Git. Native release archives are created in `dist/`. Local firmware backups, personal Vial layouts, screenshots and diagnostic files stay outside this repository and must never enter release assets.
+`target/`, `dist/` and Python bytecode caches are generated and ignored by Git. `bin/keycorner` is intentionally tracked so marketplace clones are runnable without Cargo; other bin outputs stay ignored. Native release archives are created in `dist/`. Local firmware backups, personal Vial layouts, screenshots and diagnostic files stay outside this repository and must never enter release assets.
 
 ## Common commands
 
 - `./keycorner.sh build`: build the runtime into `bin/`.
-- `./keycorner.sh install`: build and install the native plugin.
+- `./keycorner.sh install`: install the bundled native plugin without Cargo.
 - `./keycorner.sh test`: Rust and JavaScript tests.
 - `QT_QPA_PLATFORM=offscreen /usr/lib/qt6/bin/qmltestrunner -input tests/qml -o -,txt`: Qt UI tests.
-- `./scripts/package.sh`: build and verify a native archive.
+- `./scripts/package.sh`: verify and package the bundled native runtime.

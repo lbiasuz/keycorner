@@ -59,6 +59,7 @@ FloatingWindow {
                 spacing: 12
                 Label { textFormat: Text.PlainText; text: 'Keycorner'; font.pixelSize: 24; font.bold: true }
                 Label { textFormat: Text.PlainText; text: controller.configError; visible: text.length > 0; color: controller.palette.red || '#b4637a'; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                Button { text: 'Retry desktop setup'; visible: !controller.settingsInitialized && controller.configError.length > 0; enabled: !controller.startupBusy; onClicked: controller.retryStartup() }
                 Label { textFormat: Text.PlainText; text: 'Keyboard setup' }
                 RowLayout {
                     ComboBox {

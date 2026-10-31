@@ -2,18 +2,22 @@
 set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 case "${1:-settings}" in
-  install)
+  bootstrap|install)
+    action="$1"
     shift
-    if [[ -f "$project_dir/Cargo.toml" ]]; then
-      cargo build --release --locked --manifest-path "$project_dir/Cargo.toml"
-      exec "$project_dir/target/release/keycorner" install --source "$project_dir" "$@"
+    if [[ $(uname -m) != x86_64 ]]; then
+      printf '%s\n' '{"ok":false,"error":"This release supports x86_64 Linux only."}'
+      exit 1
+    fi
+    if [[ ! -x "$project_dir/bin/keycorner" ]]; then
+      printf '%s\n' '{"ok":false,"error":"Native executable missing. Reinstall the complete Keycorner release."}'
+      exit 1
+    fi
+    if [[ "$action" == bootstrap ]]; then
+      exec "$project_dir/bin/keycorner" install --setup-only --source "$project_dir"
     fi
     exec "$project_dir/bin/keycorner" install --source "$project_dir" "$@" ;;
-  build)
-    cargo build --release --locked --manifest-path "$project_dir/Cargo.toml"
-    mkdir -p "$project_dir/bin"
-    install -m 755 "$project_dir/target/release/keycorner" "$project_dir/bin/keycorner.new"
-    mv -- "$project_dir/bin/keycorner.new" "$project_dir/bin/keycorner" ;;
+  build) exec "$project_dir/scripts/prepare-native.sh" ;;
   start|enable) exec omarchy plugin enable lbiasuz.keycorner ;;
   stop|disable) exec omarchy plugin disable lbiasuz.keycorner ;;
   settings|toggleSettings|toggle|pause|auto|passthrough|state|reload) exec omarchy-shell keycorner "$1" ;;

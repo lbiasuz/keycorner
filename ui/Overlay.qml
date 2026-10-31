@@ -39,12 +39,21 @@ Item {
     function close() { updateConfig({shown: false}) }
     function dismiss() { close() }
     function toggle() { const next = !shown || paused; sessionClosed = false; updateConfig({shown: next, paused: !next}) }
+    readonly property bool startupBusy: startup.running
+    function retryStartup() { if (!startup.running) { startup.response = ''; startup.running = true } }
     Process {
-        command: Backend.command(Qt.resolvedUrl('..'), 'config-init')
+        id: startup
+        property string response: ''
+        command: ['bash', Qt.resolvedUrl('../keycorner.sh').toString().replace('file://',''), 'bootstrap']
+        stdout: StdioCollector { onStreamFinished: startup.response = text }
         running: true
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) root.settingsInitialized = true
-            else { root.configError = 'Could not initialize settings'; root.settingsOpen = true }
+            else {
+                try { root.configError = JSON.parse(startup.response).error || 'Desktop setup failed' }
+                catch (error) { root.configError = 'Could not start Keycorner. Check its runtime dependencies and reinstall the complete release.' }
+                root.settingsOpen = true
+            }
         }
     }
     FileView {
