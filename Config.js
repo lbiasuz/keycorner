@@ -2,7 +2,7 @@
 function defaults() {
     return {version: 1, backend: 'standard', deviceId: '', standardLayout: 'ansi104', keyboards: {}, shown: true, paused: false, corner: 'bottom-right', monitor: '',
         keySize: 34, opacity: 0.78, margin: 18, topMargin: 48, clickThrough: false, positionLocked: false,
-        suggestLayers: true, previewLayer: 0, showOutput: true};
+        showModifierBadges: true, highlightModifierHolds: true, suggestLayers: true, previewLayer: 0, showOutput: true};
 }
 function normalize(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Settings must be an object');

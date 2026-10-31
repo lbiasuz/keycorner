@@ -39,3 +39,8 @@ assert.throws(()=>c.saveKeyboard(profileConfig,{deviceId:first,name:'Wrong',layo
 for (const keyboards of [null,[],{'../bad':profiles[first]},{[first]:{...profiles[first],backend:'bad'}},{[first]:{...profiles[first],keys:2048}},{[first]:{...profiles[first],layers:0}}]) assert.throws(()=>c.normalize({keyboards}));
 assert.equal(JSON.stringify(c.normalize({...profileConfig,keyboards:profiles}).keyboards),JSON.stringify(profiles));
 console.log('Keyboard profiles, selection, isolation and validation passed.');
+
+assert.equal(c.normalize({}).showModifierBadges,true);
+assert.equal(c.normalize({}).highlightModifierHolds,true);
+assert.equal(c.normalize({showModifierBadges:false,highlightModifierHolds:false}).highlightModifierHolds,false);
+assert.throws(()=>c.normalize({highlightModifierHolds:'true'}));

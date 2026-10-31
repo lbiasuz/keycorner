@@ -34,4 +34,18 @@ TestCase {
         compare(Highlight.modifiers([4,32],'vial'),[])
         compare(Highlight.modifiers([],'vial'),[])
     }
+    function test_modtap_hold_and_release() {
+        var keys = [key(0x2804,4),key(0x3207,7)]
+        compare(Highlight.holds(keys,0,null,[227],'vial',6),[true,false])
+        compare(Highlight.holds(keys,0,null,[229],'vial',6),[false,true])
+        compare(Highlight.holds(keys,0,null,[4],'vial',6),[false,false])
+        compare(Highlight.holds(keys,0,null,[],'vial',6),[false,false])
+        compare(Highlight.holds([key(0x6804,4)],0,null,[227],'vial',5),[true])
+    }
+    function test_no_false_modtap_from_shifted_symbol_or_duplicates() {
+        compare(Highlight.holds([key(0x2204,4),key(0x0220,32)],0,null,[225,32],'vial',6),[false,false])
+        compare(Highlight.holds([key(0x2804,4),key(0x2805,5)],0,null,[227],'vial',6),[false,false])
+        compare(Highlight.holds([key(225,225)],0,null,[225],'vial',6),[true])
+        compare(Highlight.holds([key(0,42)],0,null,[42],'standard',6),[true])
+    }
 }

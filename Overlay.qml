@@ -204,6 +204,8 @@ Item {
     property var layout: ({keys: [], layers: 0, width: 14.25, height: 6})
     property var palette: ({background: '#faf4ed', foreground: '#575279', accent: '#56949f', muted: '#cecacd', lighter_background: '#f2e9e1', dark_foreground: '#9893a5'})
     property var pressed: []
+    readonly property var modifierHolds: Highlight.holds(layout.keys, activeLayer, firmwareLayer >= 0 ? firmwareKeys : null, pressed, config.backend, layout.protocol === undefined ? 5 : layout.protocol)
+    readonly property color modifierColor: color("yellow", color("foreground", "#e6d9db"))
     readonly property var activeModifiers: Highlight.modifiers(pressed, config.backend)
     readonly property var highlighted: Highlight.keys(layout.keys, activeLayer, firmwareLayer >= 0 ? firmwareKeys : null, pressed, config.backend)
     readonly property int preview: Math.min(config.previewLayer, Math.max(0, layout.layers-1))
@@ -452,7 +454,7 @@ Item {
                 anchors { right: parent.right; rightMargin: 16 }
                 y: 35
                 spacing: 4
-                visible: root.activeModifiers.length > 0
+                visible: root.config.showModifierBadges && root.activeModifiers.length > 0
                 Repeater {
                     model: root.activeModifiers
                     Rectangle {
@@ -495,18 +497,19 @@ Item {
                         readonly property var liveKey: root.firmwareLayer >= 0 ? root.firmwareKeys[index] : null
                         readonly property int code: liveKey ? (liveKey.usage || 0) : (modelData.usages[root.activeLayer] || 0)
                         readonly property bool down: root.highlighted[index] === true
+                        readonly property bool modifierHeld: root.config.highlightModifierHolds && root.modifierHolds[index] === true
                         x: modelData.x * root.unit; y: modelData.y * root.unit
                         width: modelData.w * root.unit - 3; height: modelData.h * root.unit - 3
                         radius: 4
-                        color: down ? root.palette.accent : root.translucentKey
+                        color: modifierHeld ? root.modifierColor : (down ? root.palette.accent : root.translucentKey)
                         border.width: 1
-                        border.color: down ? root.palette.accent : root.color('muted','#cecacd')
+                        border.color: modifierHeld ? root.modifierColor : down ? root.palette.accent : root.color('muted','#cecacd')
                         Text { textFormat: Text.PlainText;
                             anchors { fill: parent; margins: 2 }
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                             text: parent.liveKey ? parent.liveKey.label : (modelData.labels[root.activeLayer] || '—')
-                            color: parent.down ? root.palette.background : root.palette.foreground
-                            font { family: 'monospace'; pixelSize: root.unit * 0.29; bold: parent.down }
+                            color: parent.down || parent.modifierHeld ? root.palette.background : root.palette.foreground
+                            font { family: 'monospace'; pixelSize: root.unit * 0.29; bold: parent.down || parent.modifierHeld }
                             fontSizeMode: Text.Fit; minimumPixelSize: 7
                         }
                     }

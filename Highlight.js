@@ -41,3 +41,38 @@ function modifiers(pressed, backend) {
     }
     return active
 }
+
+function holdMask(code, protocol) {
+    if (code >= 224 && code <= 231) return 1 << (code - 224)
+    var modtap = protocol < 6 ? (code >= 0x6000 && code <= 0x7fff) : (code >= 0x2000 && code <= 0x3fff)
+    if (!modtap) return 0
+    var mods = (code >> 8) & 31
+    return (mods & 16) ? ((mods & 15) << 4) : (mods & 15)
+}
+// Modifier outputs are certain; their physical source is inferred for mod-taps.
+// Do not choose among duplicate assignments or mistake # for a Shift hold.
+function holds(layoutKeys, layer, liveKeys, pressed, backend, protocol) {
+    var active = modifiers(pressed, backend), mask = 0, counts = {}, candidates = [], synthetic = 0
+    for (var i = 0; i < active.length; ++i) mask |= active[i].bit
+    for (var j = 0; j < layoutKeys.length; ++j) {
+        var key = layoutKeys[j], live = liveKeys && liveKeys[j]
+        var usage = live ? live.usage : key.usages[layer]
+        var code = live ? live.code : (key.codes ? key.codes[layer] : 0)
+        if (!live && code === 1) code = key.codes[0]
+        if (backend === 'standard') {
+            candidates.push({direct:true, mask:0, usage:usage})
+            continue
+        }
+        var required = requiredModifiers(code)
+        if (pressed.indexOf(usage) >= 0 && (mask & required) === required) synthetic |= required
+        var assigned = holdMask(code, protocol)
+        if (assigned) counts[assigned] = (counts[assigned] || 0) + 1
+        candidates.push({direct:code >= 224 && code <= 231, mask:assigned, usage:usage})
+    }
+    return candidates.map(function(c) {
+        if (backend === 'standard') return active.some(function(m) { return m.usage === c.usage })
+        if (!c.mask || (mask & c.mask) !== c.mask) return false
+        if (c.direct) return true
+        return counts[c.mask] === 1 && !(synthetic & c.mask) && pressed.indexOf(c.usage) < 0
+    })
+}

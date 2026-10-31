@@ -145,6 +145,8 @@ FloatingWindow {
                     }
                 }
                 Switch { visible: controller.config.backend === 'vial'; text: 'Suggest layer'; checked: controller.config.suggestLayers; onToggled: controller.updateConfig({suggestLayers:checked}) }
+                Switch { text: 'Modifier badges'; checked: controller.config.showModifierBadges; onToggled: controller.updateConfig({showModifierBadges:checked}) }
+                Switch { visible: controller.config.backend === 'vial'; text: 'Highlight modifier holds'; checked: controller.config.highlightModifierHolds; onToggled: controller.updateConfig({highlightModifierHolds:checked}) }
                 Switch { text: 'Lock position'; checked: controller.config.positionLocked; onToggled: controller.updateConfig({positionLocked:checked}) }
                 Switch { text: 'Click through overlay'; checked: controller.config.clickThrough; onToggled: controller.updateConfig({clickThrough:checked}) }
                 Label { textFormat: Text.PlainText; text: 'Keyboard shortcuts'; font.bold: true; font.pixelSize: 18 }
