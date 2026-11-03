@@ -4,6 +4,7 @@ use std::{collections::BTreeSet, io::Read, sync::OnceLock};
 pub type Keys = BTreeSet<u16>;
 pub fn standard(preset: &str) -> Result<Value> {
     Ok(serde_json::from_str(match preset {
+        "abnt2" => include_str!("../data/abnt2.json"),
         "ansi104" => include_str!("../data/ansi104.json"),
         "ansi87" => include_str!("../data/ansi87.json"),
         "ansi60" => include_str!("../data/ansi60.json"),

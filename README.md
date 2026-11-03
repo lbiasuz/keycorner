@@ -70,8 +70,8 @@ from source needs Rust/Cargo 1.88+, a C toolchain, pkg-config and liblzma develo
 files. Python 3.12+ is used by release-checking tools, and Node.js by configuration tests; neither is a runtime dependency.
 
 **Standard mode supports ordinary Linux keyboards without Vial or QMK.** Select
-one keyboard in Settings and choose a US ANSI full-size, TKL or 60% preset.
-These are US QWERTY label presets; automatic XKB labels and ISO/ABNT2/custom
+one keyboard in Settings and choose a US ANSI full-size, TKL, 60%, or Brazilian ABNT2 preset.
+These are fixed physical-layout label presets; automatic XKB labels and other ISO/custom
 physical layouts are not implemented. Broader physical-keyboard coverage remains a release requirement.
 
 **Vial layout mode uses capabilities, not a vendor/product allowlist.** Setup finds
@@ -108,7 +108,7 @@ The current dragged position and resized dimensions are session-only.
 
 On first use, one Vial candidate is selected automatically, its protocol and layout
 are checked, and its profile is saved. If multiple Vial candidates are connected,
-Settings asks you to choose. Ordinary keyboards use a manually chosen ANSI preset.
+Settings asks you to choose. Ordinary keyboards use a manually chosen layout preset.
 A device advertising a Vial-style interface is only a candidate: unsupported VIA-only
 or malformed responses produce a clear error and offer Standard mode.
 

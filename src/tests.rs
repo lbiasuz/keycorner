@@ -106,13 +106,50 @@ fn compressed_definition_limits() {
 }
 #[test]
 fn standard_presets() {
-    for (p, count) in [("ansi104", 104), ("ansi87", 87), ("ansi60", 61)] {
+    for (p, count) in [
+        ("ansi104", 104),
+        ("ansi87", 87),
+        ("ansi60", 61),
+        ("abnt2", 107),
+    ] {
         let layout = core::standard(p).unwrap();
         assert_eq!(layout["keys"].as_array().unwrap().len(), count);
         assert_eq!(layout["layers"], 1);
         assert_eq!(layout["source"], "standard");
     }
     assert!(core::standard("other").is_err());
+}
+#[test]
+fn abnt2_distinct_physical_keys() {
+    let layout = core::standard("abnt2").unwrap();
+    let keys = layout["keys"].as_array().unwrap();
+    let mut seen = std::collections::BTreeSet::new();
+    for key in keys {
+        assert!(seen.insert(key["codes"][0].as_u64().unwrap()));
+    }
+    for (code, label) in [
+        (39, "Ç"),
+        (86, "\\"),
+        (89, "/"),
+        (100, "AltGr"),
+        (121, "."),
+        (83, ","),
+    ] {
+        let key = keys.iter().find(|k| k["codes"][0] == code).unwrap();
+        assert_eq!(key["labels"][0], label);
+    }
+    // Rectangular approximations must not cover a neighboring switch.
+    for (i, a) in keys.iter().enumerate() {
+        for b in &keys[i + 1..] {
+            let n = |k: &serde_json::Value, f: &str| k[f].as_f64().unwrap();
+            assert!(
+                n(a, "x") + n(a, "w") <= n(b, "x")
+                    || n(b, "x") + n(b, "w") <= n(a, "x")
+                    || n(a, "y") + n(a, "h") <= n(b, "y")
+                    || n(b, "y") + n(b, "h") <= n(a, "y")
+            );
+        }
+    }
 }
 fn event(kind: u16, code: u16, value: i32) -> Vec<u8> {
     let mut bytes = vec![0; std::mem::size_of::<libc::timeval>()];

@@ -87,8 +87,8 @@ FloatingWindow {
                 }
                 ComboBox {
                     visible: controller.config.backend === 'standard'; Layout.fillWidth: true; enabled: !controller.deviceBusy
-                    model: ['US ANSI 104', 'US ANSI TKL', 'US ANSI 60%']
-                    property var presets: ['ansi104','ansi87','ansi60']
+                    model: ['US ANSI 104', 'US ANSI TKL', 'US ANSI 60%', 'Brazilian ABNT2']
+                    property var presets: ['ansi104','ansi87','ansi60','abnt2']
                     currentIndex: presets.indexOf(controller.config.standardLayout)
                     onActivated: controller.updateConfig({standardLayout:presets[currentIndex]})
                 }

@@ -13,7 +13,7 @@ Not submitted. The repository must remain private until publication is authorize
 
 A movable, translucent keyboard overlay for Omarchy. See pressed keys, mouse buttons and held modifiers, customize shortcuts, lock its position or enable click-through. Capture stops while hidden, paused or screen-locked.
 
-Choose standard ANSI keyboard presets or discover layouts from compatible Vial keyboards. Save settings per keyboard. Exact live layers are available with the optional Keycorner firmware extension; installing the plugin never flashes firmware.
+Choose US ANSI or Brazilian ABNT2 keyboard presets or discover layouts from compatible Vial keyboards. Save settings per keyboard. Exact live layers are available with the optional Keycorner firmware extension; installing the plugin never flashes firmware.
 
 ## Installation and requirements
 
@@ -29,7 +29,7 @@ Open Keycorner Settings, select a keyboard when needed, and explicitly enable de
 
 ## Compatibility and privacy
 
-Standard presets currently use US ANSI labels. Vial support is capability-based, not a guarantee for every firmware or layout. Rotated layouts and some report fields are unsupported. Moving a device between USB ports may require selection again. Ordinary HID output cannot uniquely identify every physical switch when assignments overlap.
+Standard presets currently cover US ANSI and Brazilian ABNT2 labels. Vial support is capability-based, not a guarantee for every firmware or layout. Rotated layouts and some report fields are unsupported. Moving a device between USB ports may require selection again. Ordinary HID output cannot uniquely identify every physical switch when assignments overlap.
 
 Input access is device-scoped and user-approved. The plugin runs inside Omarchy's unsandboxed shell. It does not transmit typing or download executable code at startup. Password-field detection is not provided; use the independent pause shortcut when needed.
 

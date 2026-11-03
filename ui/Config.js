@@ -21,7 +21,7 @@ function normalize(input) {
         if (!/^[a-f0-9]{24}$/.test(id) || !profile || typeof profile !== 'object' || Array.isArray(profile) ||
             typeof profile.name !== 'string' || profile.name.length > 160 ||
             ['standard','vial'].indexOf(profile.backend) === -1 ||
-            ['ansi104','ansi87','ansi60'].indexOf(profile.standardLayout) === -1 ||
+            ['ansi104','ansi87','ansi60','abnt2'].indexOf(profile.standardLayout) === -1 ||
             !Number.isInteger(profile.keys) || profile.keys < 1 || profile.keys > 1024 ||
             !Number.isInteger(profile.layers) || profile.layers < 1 || profile.layers > 32) throw new Error('Invalid saved keyboard');
         profiles[id] = {name:profile.name, backend:profile.backend, standardLayout:profile.standardLayout, keys:profile.keys, layers:profile.layers};
@@ -29,7 +29,7 @@ function normalize(input) {
     result.keyboards = profiles;
     if (['standard','vial'].indexOf(result.backend) === -1) throw new Error('Invalid keyboard mode');
     if (result.deviceId && !/^[a-f0-9]{24}$/.test(result.deviceId)) throw new Error('Invalid keyboard selection');
-    if (['ansi104','ansi87','ansi60'].indexOf(result.standardLayout) === -1) throw new Error('Invalid keyboard layout');
+    if (['ansi104','ansi87','ansi60','abnt2'].indexOf(result.standardLayout) === -1) throw new Error('Invalid keyboard layout');
     if (['bottom-right','bottom-left','top-right','top-left'].indexOf(result.corner) === -1) throw new Error('Invalid corner');
     var ranges = {keySize:[28,60], opacity:[0.15,1], margin:[0,200], topMargin:[0,200], previewLayer:[0,31]};
     for (var name in ranges) {
@@ -69,7 +69,7 @@ function onboarding(config, devices) {
     var ready = saved && saved.backend === config.backend && saved.standardLayout === config.standardLayout;
     if (config.backend === 'standard' && !selected.standardAccessible) return {action:'permission', message:'Enable access to use this keyboard'};
     if (ready && config.backend === 'standard') return {action:'ready'};
-    if (config.backend !== 'vial') return {action:'standard', message:'Choose the matching ANSI preset, then add keyboard'};
+    if (config.backend !== 'vial') return {action:'standard', message:'Choose the matching layout preset, then add keyboard'};
     if (!selected.vial || !selected.keyboardReports) return {action:'unsupported', message:'Vial reports unavailable; choose Standard mode'};
     if (!selected.vialAccessible) return {action:'permission', message:'Enable access to read this keyboard’s layout'};
     return {action:ready ? 'ready' : 'inspect'};

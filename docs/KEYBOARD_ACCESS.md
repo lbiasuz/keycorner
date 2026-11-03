@@ -25,11 +25,11 @@ Profiles do not automatically switch capture to an arbitrary newly attached devi
 Open Settings, select a physical keyboard and choose a mode:
 
 - **Standard:** read-only Linux evdev input. Choose US ANSI 104, TKL (87), or
-  60% (61 keys). This works with ordinary USB keyboards, laptop keyboards and
+  60% (61 keys), or Brazilian ABNT2 (107 keys). This works with ordinary USB keyboards, laptop keyboards and
   other Linux keyboard devices with stable physical identity. Bluetooth devices
   require a stable `phys` identity; device variations still need hardware testing.
-  Labels are US QWERTY presets, not an automatic readout of the desktop's XKB
-  layout or firmware remapping. ISO, ABNT2 and custom physical presets are not
+  Labels follow the selected fixed preset, not an automatic readout of the desktop's XKB
+  layout or firmware remapping. Other ISO and custom physical presets are not
   implemented yet. Fn is usually internal to firmware and is not reported.
 - **Vial layout:** read the keyboard's physical layout and keymaps. Discovery
   checks a 32-byte raw HID interface on usage page `0xff60`, usage `0x61`;
@@ -153,8 +153,10 @@ port was checked with identical rule previews and validation but did not reinsta
 existing system rules. The generated standard
 and Vial rules passed `udevadm verify`. Synthetic event tests cover partial records,
 repeat suppression, releases and overrun resynchronization. A separate physical
-ordinary keyboard and Bluetooth/ISO/ABNT2 hardware have not yet been tested here.
+ABNT2 keyboard passed physical key/modifier/numpad highlighting and release tests. Its previously inaccessible event node became accessible through the Rust permission flow. The independent pause shortcut kept the overlay visible and terminated the reader. Hiding also stopped the reader, and reconnecting to the same port resumed highlighting without re-adding the keyboard. Bluetooth and other ISO hardware remain untested.
 
 References: [Linux event protocol](https://docs.kernel.org/input/event-codes.html),
 [udev rules](https://www.freedesktop.org/software/systemd/man/latest/udev.html),
 [Vial permission setup](https://get.vial.today/manual/linux-udev.html).
+
+The ABNT2 preset uses Linux evdev codes and the Brazilian symbol/geometry conventions from xkeyboard-config (`symbols/br`, `keycodes/evdev`, `geometry/pc`). Enter is approximated by a tall rectangle. Presets do not follow runtime XKB remapping or Num Lock labels automatically.

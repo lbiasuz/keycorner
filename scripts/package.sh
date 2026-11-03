@@ -15,6 +15,7 @@ done < packaging/runtime-files.txt
 cp -- bin/keycorner "$package_dir/bin/keycorner"
 mkdir -p "$package_dir/docs"
 cp -- docs/*.md "$package_dir/docs/"
+cp -r -- docs/marketplace "$package_dir/docs/marketplace"
 tar --owner=0 --group=0 --numeric-owner -C "$staging_dir" -czf dist/keycorner-rust-linux-"$(uname -m)".tar.gz keycorner-rust
 python3 scripts/check_package.py "dist/keycorner-rust-linux-$(uname -m).tar.gz"
 printf 'Package: %s\n' "$project_dir/dist/keycorner-rust-linux-$(uname -m).tar.gz"
