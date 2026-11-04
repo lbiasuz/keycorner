@@ -4,7 +4,7 @@
   "name": "Keycorner",
   "version": "0.6.0",
   "author": "lbiasuz",
-  "description": "Translucent keyboard overlay with standard keyboard support, capability-based Vial layouts and per-keyboard setup, and device-scoped access setup.",
+  "description": "A floating keyboard overlay for Omarchy with live key highlights, 18 standard layouts, Vial discovery and configurable privacy shortcuts.",
   "kinds": [
     "overlay",
     "bar-widget"

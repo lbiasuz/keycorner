@@ -1,8 +1,10 @@
 # Publishing Keycorner
 
-The repository is private; v0.6.0 is a draft with native archive and checksum attached. GitHub publication and marketplace submission are deferred until a later explicit instruction.
+## Publication status
 
-The v0.6.0 release candidate uses the Rust runtime on the default `main` branch. The desktop plugin is MIT; optional firmware integration sources are GPL-2.0-or-later and remain separate from the native plugin archive.
+The repository is public. The `v0.6.0` GitHub release is still a draft with the native archive and checksum attached. No Omarchy marketplace submission has been made. Update this section after publishing or submitting; other documentation links here instead of repeating the status.
+
+Version 0.6.0 uses the Rust runtime on the default `main` branch. The desktop plugin is MIT; optional firmware integration sources are GPL-2.0-or-later and remain separate from the native plugin archive.
 
 ## Release procedure
 
@@ -24,7 +26,7 @@ GitHub publication does not mean marketplace acceptance. The [Omarchy publishing
 - Repository: https://github.com/lbiasuz/keycorner
 - Category: System
 - Tags: keyboard, overlay, vial
-- Summary: A movable, translucent keyboard overlay with standard keyboard presets, Vial layout discovery, live key and mouse-button highlights, modifier indicators and configurable privacy shortcuts.
+- Summary: A floating keyboard overlay for Omarchy with live key highlights, 18 standard layouts, Vial discovery and configurable privacy shortcuts.
 - Limits: exact layers require optional firmware; physical switch identity is unavailable from ordinary HID output; standard presets have fixed regional legends and documented validation levels.
 
 See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remaining validation.
@@ -34,15 +36,15 @@ See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remain
 - [Draft listing and preview](marketplace/LISTING.md)
 - [Validation evidence and remaining acceptance checks](marketplace/READINESS.md)
 
-These materials are private preparation only. Review the documented validation limits and obtain explicit publication authorization before making the repository public, publishing the draft release, or contacting marketplace maintainers.
+Review the documented validation limits and prepared materials before publishing the release or submitting to marketplace maintainers.
 
 ## Final publication handoff
 
-Public-facing copy and [release notes](marketplace/RELEASE_NOTES.md) are prepared without claiming a marketplace listing. The actual repository remains private and the GitHub release remains a draft until explicitly published.
+Public-facing copy and [release notes](marketplace/RELEASE_NOTES.md) are prepared. Check the publication status above before following the remaining steps.
 
 1. Confirm `main` has a successful Checks run and no additional changes to include.
 2. Confirm the draft `v0.6.0` targets that exact commit and contains the matching archive and `SHA256SUMS`. If changes were made after preparation, rebuild and refresh both before continuing.
-3. Make the repository public in GitHub Settings → General → Danger Zone → Change visibility. Visibility applies to all repository branches, including historical reference branches.
+3. Verify that the repository is public. Visibility applies to all repository branches, including historical reference branches.
 4. Publish the prepared GitHub draft release. Confirm the resulting `v0.6.0` tag resolves to the tested commit.
 5. Verify an unauthenticated clone and download/checksum verification. A normal Git install must contain executable `bin/keycorner` and the root manifest. Existing users need not reset their settings.
 6. Open **Submit a plugin** from https://plugins.omarchy.org/publish.html. Use the repository URL, System category, keyboard/overlay/vial tags, prepared [listing](marketplace/LISTING.md), and `docs/marketplace/preview.png`. The feature tour links the additional screenshots.

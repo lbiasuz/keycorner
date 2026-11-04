@@ -25,4 +25,4 @@ Automated tests cover absent executable, unsupported architecture, first setup w
 
 The real Omarchy add/enable, update, disable and remove commands were also exercised in an isolated HOME with a nested compositor and Omarchy shell. Installation bootstrapped successfully, an update preserved hidden/paused state and appearance settings, disabling removed the IPC target, and removal preserved settings with no Hyprland configuration errors. No compiler or input-device access was needed.
 
-This is a clean-profile lifecycle test, not a fresh OS account permission test. Administrator authentication and physical input access still need that separate validation. See [release readiness](marketplace/READINESS.md). Publication and submission remain deferred.
+This is a clean-profile lifecycle test, not a fresh OS account permission test. The ordinary-keyboard permission grant and physical input were subsequently tested on an existing account; fresh-account and revocation checks remain unverified. See [validation status](marketplace/READINESS.md) and [publication status](PUBLISHING.md#publication-status).

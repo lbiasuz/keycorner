@@ -1,6 +1,6 @@
-# Draft marketplace submission
+# Marketplace listing
 
-Not submitted. The repository must remain private until publication is authorized.
+See [publication status](../PUBLISHING.md#publication-status).
 
 - Name: Keycorner
 - Repository: https://github.com/lbiasuz/keycorner
@@ -8,6 +8,7 @@ Not submitted. The repository must remain private until publication is authorize
 - Tags: keyboard, overlay, vial
 - License: MIT (optional firmware sources separately GPL-2.0-or-later)
 - Preview: [preview.png](preview.png)
+- Summary: A floating keyboard overlay for Omarchy with live key highlights, 18 standard layouts, Vial discovery and configurable privacy shortcuts.
 
 ## Description
 

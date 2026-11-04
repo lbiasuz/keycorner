@@ -4,7 +4,7 @@
 
 **v0.6.0 · MIT desktop plugin · Omarchy 4 / Hyprland Lua**
 
-A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo runtime replaces the Python backend and setup helpers with one native executable. The historical Python implementation is preserved on the [`python-reference` branch](https://github.com/lbiasuz/keycorner/tree/python-reference).
+A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window.
 
 ## Use
 
@@ -16,7 +16,7 @@ The keyboard icon in the bar provides:
 
 **Super + Ctrl + Shift + K** hides/pauses or shows/resumes the keyboard overlay.
 **Super + Ctrl + Shift + O** opens/closes the settings panel.
-**Super + Ctrl + Shift + P** pauses/resumes HID listening while keeping the keyboard visible.
+**Super + Ctrl + Shift + P** pauses/resumes input listening while keeping the keyboard visible.
 
 Click a shortcut button in **Settings → Keyboard shortcuts**, press the desired
 combination, then click **Apply shortcuts**. Escape cancels recording; **Clear**
@@ -39,12 +39,12 @@ failed or unknown checks leave capture off. Lock handling is event-driven, with
 no periodic polling. This is asynchronous privacy protection, not a security
 boundary against other software running as your user.
 
-The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. The header and footer text have been removed; connection details are available in settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process.
+The overlay has a monochrome **sliders icon** for settings, **pause/resume**, and **×** buttons. Drag any key or empty background to move the floating window. Drag its bottom-right grip to resize; keys scale proportionally. Hyprland’s Super + right-drag resize also works. Connection details are available in Settings. The × button hides only Keycorner; it never exits Omarchy. Hiding, pausing or minimizing stops the input process.
 **Lock position** disables dragging from the keyboard/background and hides its
 resize grip; buttons remain usable. Hyprland's own window-management commands
 (such as Super-drag) remain available.
 **Click through overlay** passes all pointer input to windows underneath,
-including clicks over the overlay controls. It does not stop HID listening.
+including clicks over the overlay controls. It does not stop input listening.
 Use the settings hotkey or right-click the bar icon to turn it off.
 Both switches persist across restarts and can be used independently.
 
@@ -60,7 +60,7 @@ Settings save automatically to `~/.config/omarchy/keycorner.json` and persist ac
 | Layout | Preview layer, conservative layer suggestions, automatic firmware layers when available |
 | Modifiers | Modifier badges; Vial modifier-hold coloring |
 
-Omarchy's current palette is applied automatically, including while HID capture is paused, hidden or disconnected. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
+Omarchy's current palette is applied automatically, including while input capture is paused, hidden or disconnected. The keyboard floats and is pinned across workspaces, without taking initial focus. Settings also float. A narrow user-owned Hyprland rule is installed in `~/.config/hypr/keycorner.lua`; its include is added to `hyprland.lua` with a backup.
 
 ## Compatibility
 
@@ -99,7 +99,7 @@ original file, validates the configuration and rolls back its edits if validatio
 fails. Existing settings and customized rules are preserved. No root access is
 needed by the plugin or installer.
 
-`./keycorner.sh install` copies the bundled native runtime into the plugin directory and enables it, without Cargo or Python. To rebuild from source first, run `./keycorner.sh build`. The historical Python installer is preserved only on `python-reference`. See [Rust architecture and comparison](RUST.md).
+`./keycorner.sh install` copies the bundled native runtime into the plugin directory and enables it, without Cargo or Python. To rebuild from source first, run `./keycorner.sh build`. See [build requirements and architecture](RUST.md).
 
 Git-managed Omarchy installations include `bin/keycorner` and update the executable together with the UI. First enable completes desktop setup before capture begins. Updates preserve settings, customized shortcuts and rules. For manually copied installations, pull changes and rerun `./keycorner.sh install`.
 If Omarchy retains cached QML, use `omarchy restart shell` after saving your work.
@@ -124,7 +124,7 @@ only its profile. Standard mode requires choosing a preset and **Add keyboard**.
 When access is missing, **Enable access** previews the rule and asks for administrator
 authentication. Successful Vial access setup automatically continues layout discovery.
 Hidden/paused/locked sessions never start input capture as a side effect of setup.
-See the [compatibility matrix and release gate](COMPATIBILITY.md).
+See the [compatibility and validation status](COMPATIBILITY.md).
 
 If necessary, **Enable access** previews and
 installs a device-specific Keycorner udev rule after administrator authentication.
@@ -183,24 +183,7 @@ Device permissions must be configured on each machine. The runtime stays unprivi
 
 ## Development
 
-See [repository structure](STRUCTURE.md) for folder responsibilities and deployment paths.
-
-- `manifest.json`: Omarchy overlay and bar-widget registration.
-- `ui/Overlay.qml`: overlay, bridge lifecycle, settings persistence and IPC.
-- `ui/SettingsWindow.qml`: settings controls.
-- `ui/BarWidget.qml`: bar access.
-- `ui/Config.js`: shared configuration validation/defaults.
-- `ui/Backend.js`: command routing to the native runtime.
-- `src/devices.rs`: scoped discovery and stable device selection.
-- `src/core.rs`, `data/`: layouts, labels, reports and layer suggestions.
-- `src/stream.rs`: Vial read queries, evdev decoding and blocking input loop.
-- `src/permissions.rs`: permission preview and authenticated setup.
-- `src/shortcuts.rs`, `src/setup.rs`: shortcut and installation helpers.
-- `python-reference` branch: archived Python implementation, tests and parity generator.
-- `tests/`: native tests, synthetic Python parity fixtures and UI/config tests.
-
-`bin/keycorner` is bundled for x86_64 Linux. Maintainers run `./keycorner.sh build` to refresh it after Rust changes.
-`ui/shell.qml` is a standalone development harness (run only with the plugin disabled to avoid duplicate capture). It uses the same persistent settings.
+For source builds, tests and implementation details, see the [contribution guide](../CONTRIBUTING.md), [repository structure](STRUCTURE.md) and [Rust architecture](RUST.md).
 
 ## Releases
 

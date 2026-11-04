@@ -1,6 +1,6 @@
-# Marketplace preparation
+# Validation status
 
-Publication is blocked until explicitly authorized. Keep the repository private and release draft; do not submit a marketplace issue yet.
+See [publication status and handoff](../PUBLISHING.md#publication-status). This document records validation evidence and remaining coverage.
 
 | Area | Evidence | Status |
 | --- | --- | --- |
@@ -13,17 +13,16 @@ Publication is blocked until explicitly authorized. Keep the repository private 
 | Ordinary keyboards | Physical ABNT2 keyboard: permission grant, 107-key preset, tested letters/extra keys/modifiers/numpad and releases; pause shortcut stops reader while visible, hide stops reader, and same-port reconnect resumes without re-adding | Passed for this keyboard; physical US ANSI untested |
 | Permissions | Rust authenticated device-scoped grant tested on a previously inaccessible ordinary keyboard | Grant passed on existing account; fresh-account/revocation pending |
 | Preview/listing | Reviewed overlay/setup/shortcut screenshots, feature tour and submission copy prepared | Ready for review |
-| Public repository/release/submission | Requires explicit publication instruction | Deferred |
 
 The lifecycle sandbox provided a separate HOME, compositor and session bus, with no input device nodes. Missing system services kept capture inactive. It proves lifecycle behavior, not authentication, lock integration or physical keyboard compatibility on a clean installation.
 
-## Remaining manual acceptance checks
+## Additional validation coverage
 
 1. On a fresh Omarchy account, add and enable the plugin. Confirm the permission action is explicit, targets only the selected device, and works after reconnect. Revoke it and confirm capture stops.
 2. Ordinary ABNT2 permission/setup, key/modifier/numpad releases, pause/hide and same-port reconnect have passed. Physical US ANSI and additional standard devices remain useful follow-up coverage.
 3. Connect an independently configured Vial keyboard. Verify discovery, permission/setup prompts, labels and reconnect. With multiple Vial keyboards connected, verify explicit selection is required. Exact live layer reporting is expected only with the optional firmware extension.
 4. Check show/hide, pause, lock/unlock and click-through recovery using configured shortcuts. Never type a password during a capture test.
-5. Review the listing and preview, then obtain explicit authorization before changing visibility or submitting anything.
+5. Review the listing and preview against the current feature set before submission.
 
 Keep device identifiers, layouts, logs and account details outside Git. Do not describe pending checks as passed.
 

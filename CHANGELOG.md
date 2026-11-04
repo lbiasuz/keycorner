@@ -14,7 +14,7 @@ Rust runtime with standard keyboard presets and capability-based Vial setup.
 - Organize UI, desktop templates, Python reference and tests into dedicated folders; share the installer/package runtime inventory.
 
 - Add event-driven keyboard discovery and automatic setup for a single Vial candidate.
-- Continue setup after permission grants, preserve explicit selections, and document compatibility release gates.
+- Continue setup after permission grants, preserve explicit selections, and document compatibility validation status.
 
 - Add mouse-button highlighting (buttons 1–8) without interpreting pointer movement.
 - Add optional modifier badges and modifier-hold coloring for Vial keys.
@@ -55,12 +55,12 @@ Rust runtime with standard keyboard presets and capability-based Vial setup.
 
 - Record shortcut combinations with focused-window shortcut inhibition, cancel and clear.
 - Simplify settings labels and rename Reference layer to Preview layer.
-- Load Omarchy colors independently of HID capture, fixing stale settings themes.
+- Load Omarchy colors independently of input capture, fixing stale settings themes.
 
 - Configure all three shortcuts in settings with conflict checks and rollback.
 - Add Super+Ctrl+Shift+P to pause/resume HID input without hiding the keyboard.
 
-- Stop HID capture on Hyprland focus-clear events, including screen locking;
+- Stop input capture on Hyprland focus-clear events, including screen locking;
   require an unlocked-session check before resuming.
 - Add configurable Super+Ctrl+Shift+K privacy and Super+Ctrl+Shift+O settings shortcuts.
 - Validate live lock/unlock shutdown; retain documented asynchronous timing limits.

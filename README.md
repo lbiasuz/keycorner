@@ -72,4 +72,4 @@ Updates preserve local settings. If old QML remains cached, run `omarchy restart
 
 [Contribution guide](CONTRIBUTING.md) · [Add a layout](docs/STANDARD_LAYOUTS.md#contributing-a-layout) · [Repository structure](docs/STRUCTURE.md) · [Changelog](CHANGELOG.md)
 
-The runtime is Rust; the UI is QML. The historical Python reference is on `python-reference`. Optional firmware integration sources have their own GPL license and are separate from the MIT desktop plugin.
+The runtime is Rust; the UI is QML. Optional firmware integration sources have their own GPL license and are separate from the MIT desktop plugin.
