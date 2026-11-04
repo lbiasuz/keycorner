@@ -12,7 +12,7 @@ Publication is blocked until explicitly authorized. Keep the repository private 
 | New Vial devices | Capability discovery, multiple-device selection and fallback covered by automated tests | Broader hardware unverified; no third device available |
 | Ordinary keyboards | Physical ABNT2 keyboard: permission grant, 107-key preset, tested letters/extra keys/modifiers/numpad and releases; pause shortcut stops reader while visible, hide stops reader, and same-port reconnect resumes without re-adding | Passed for this keyboard; physical US ANSI untested |
 | Permissions | Rust authenticated device-scoped grant tested on a previously inaccessible ordinary keyboard | Grant passed on existing account; fresh-account/revocation pending |
-| Preview/listing | Synthetic ANSI screenshot and submission copy prepared | Ready for review |
+| Preview/listing | Reviewed overlay/setup/shortcut screenshots, feature tour and submission copy prepared | Ready for review |
 | Public repository/release/submission | Requires explicit publication instruction | Deferred |
 
 The lifecycle sandbox provided a separate HOME, compositor and session bus, with no input device nodes. Missing system services kept capture inactive. It proves lifecycle behavior, not authentication, lock integration or physical keyboard compatibility on a clean installation.

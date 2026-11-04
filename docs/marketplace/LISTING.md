@@ -15,6 +15,18 @@ A movable, translucent keyboard overlay for Omarchy. See pressed keys, mouse but
 
 Choose 18 US ANSI, Brazilian ABNT2 and regional ISO keyboard presets or discover layouts from compatible Vial keyboards. Save settings per keyboard. Exact live layers are available with the optional Keycorner firmware extension; installing the plugin never flashes firmware.
 
+## Feature highlights
+
+![Keycorner key and modifier feedback](preview.png)
+
+- Move, resize and adjust transparency; lock the position or enable click-through.
+- Select from 18 standard layouts or discover a compatible Vial keyboard’s personal layout.
+- See held modifiers and key activity; follow exact layers with optional firmware support.
+- Record shortcuts for show/hide, Settings and pause without hiding.
+- Match Omarchy’s theme and access the overlay from its bar button.
+
+[See the feature tour and settings screenshots](FEATURES.md).
+
 ## Installation and requirements
 
 On supported x86_64 Omarchy installations:
@@ -44,6 +56,6 @@ Removal preserves preferences and desktop shortcut/rule files. Explicitly grante
 
 ## Preview provenance
 
-The preview renders the production overlay component with synthetic ANSI 60% data and simulated Shift+A, in an isolated desktop without input device access. It is a demonstration, not a recording of someone's typing. No personal layout or desktop is included.
+The screenshots render production QML components with synthetic ANSI 60% data and simulated Shift+A in an isolated desktop without input device access. Settings use a generic Demo keyboard and a representative dark palette. These are demonstrations, not recordings of someone’s typing. See [screenshot provenance](FEATURES.md#screenshot-provenance).
 
 Submission checklist: [READINESS.md](READINESS.md). Marketplace process: https://plugins.omarchy.org/publish.html

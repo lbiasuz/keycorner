@@ -10,7 +10,7 @@ The v0.6.0 release candidate uses the Rust runtime on the default `main` branch.
 2. Match Cargo, manifest and changelog versions; validate the Omarchy manifest.
 3. Run `./scripts/prepare-native.sh`, commit `bin/keycorner` and `packaging/native.json` with the matching sources, then run `./scripts/package.sh`, inspect the archive and verify the packaged executable. Publish its SHA256 checksum alongside it.
 4. Fast-forward `main` only after checks pass; tag the same commit and publish the GitHub release.
-5. Keep personal layouts, firmware backups, images, temporary build trees and desktop captures out of Git history and release assets.
+5. Keep personal layouts, firmware backups, unreviewed images, temporary build trees and personal desktop captures out of Git history and release assets.
 
 ## Distribution and compatibility
 
@@ -25,7 +25,7 @@ GitHub publication does not mean marketplace acceptance. The [Omarchy publishing
 - Category: System
 - Tags: keyboard, overlay, vial
 - Summary: A movable, translucent keyboard overlay with standard keyboard presets, Vial layout discovery, live key and mouse-button highlights, modifier indicators and configurable privacy shortcuts.
-- Limits: exact layers require optional firmware; physical switch identity is unavailable from ordinary HID output; standard presets use US ANSI labels.
+- Limits: exact layers require optional firmware; physical switch identity is unavailable from ordinary HID output; standard presets have fixed regional legends and documented validation levels.
 
 See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remaining validation.
 
@@ -34,4 +34,4 @@ See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remain
 - [Draft listing and preview](marketplace/LISTING.md)
 - [Validation evidence and remaining acceptance checks](marketplace/READINESS.md)
 
-These materials are private preparation only. Complete pending hardware/permission checks and obtain explicit publication authorization before making the repository public, publishing the draft release, or contacting marketplace maintainers.
+These materials are private preparation only. Review the documented validation limits and obtain explicit publication authorization before making the repository public, publishing the draft release, or contacting marketplace maintainers.
