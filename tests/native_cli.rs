@@ -54,6 +54,10 @@ fn config_creation_preserves_existing_invalid_file() {
         fs::metadata(&path).unwrap().permissions().mode() & 0o777,
         0o600
     );
+    let fresh: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    assert_eq!(fresh["backend"], "standard");
+    assert!(fresh.get("deviceId").is_none());
+    assert!(fresh.get("keyboards").is_none());
     fs::write(&path, "malformed but preserve").unwrap();
     assert!(
         s.command()

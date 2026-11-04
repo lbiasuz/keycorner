@@ -16,6 +16,10 @@ Choose a preset in **Settings → Keyboard setup**, then **Add keyboard** (or **
 
 All presets are available in the first release. Automated-only presets are not blocked from use, but their physical compatibility has not been confirmed. Reports and pull requests are welcome.
 
+## Built-in presets versus personal devices
+
+The release ships only standard keyboard presets. A fresh installation has no saved devices, device IDs, Vial keymaps or user profiles. Vial layouts are discovered from the user’s connected keyboard and configured locally; saved Vial profile metadata belongs only to that user’s settings and is never bundled into the release. Firmware target source code is not a saved keyboard profile.
+
 ## Meaning and limits
 
 Presets describe fixed key positions and base legends. Linux evdev codes identify the physical key independently of its printed character; German Z/Y and French A/Q, for example, retain their position's event code. Selecting a preset does not change the desktop's input language. Labels do not dynamically follow XKB remapping, Shift/AltGr output, dead-key composition or Num Lock state. Modifier indicators show held modifiers separately.

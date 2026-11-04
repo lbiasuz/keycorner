@@ -12,6 +12,7 @@ with tarfile.open(sys.argv[1]) as archive:
     names = set(archive.getnames())
     assert all(not p.startswith('/') and '..' not in Path(p).parts for p in names)
     assert not any(p.endswith(('.vil', '.uf2', '.bin', '.py')) or '/.git/' in p for p in names)
+    assert not any(Path(p).name in {"keycorner.json", "keymap-snapshot.json", "vial-definition.json"} for p in names), "Personal keyboard data in archive"
     manifest = json.loads(archive.extractfile('keycorner-rust/manifest.json').read())
     for entry in manifest['entryPoints'].values():
         assert 'keycorner-rust/' + entry in names, entry

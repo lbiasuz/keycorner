@@ -30,3 +30,5 @@ Keep device identifiers, layouts, logs and account details outside Git. Do not d
 ## First-release layout coverage
 
 All 18 presets in the [layout catalog](../STANDARD_LAYOUTS.md) are included. Physical testing is not a prerequisite for including a clearly documented preset. Additional keyboards can be supported through compatibility issues and pull requests. This does not convert untested hardware into a passed validation claim.
+
+A clean local reinstall was also completed after removing the prior plugin, keyboard settings and managed desktop rules/includes. Fresh configuration contained no selected device or saved profiles. Setup added only the ordinary ABNT2 keyboard, with zero Vial profiles; the user confirmed layout and key-release behavior. Existing system device permission grants were retained, so this is not a fresh-account permission test. Private recovery copies remain outside the repository.
