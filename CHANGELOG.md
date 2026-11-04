@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.6.0 — prepared 2026-10-31 (unpublished)
+## 0.6.0
 
-Prepared release candidate, using the Rust runtime by default. Publication is deferred.
+Rust runtime with standard keyboard presets and capability-based Vial setup.
 
 - Add fourteen regional ISO presets (UK, German, French, Spanish, Latin American Spanish, Italian and Portuguese; full-size and TKL), with shared selection/validation catalog and contribution guidance.
 

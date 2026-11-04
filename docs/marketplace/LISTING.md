@@ -35,7 +35,7 @@ On supported x86_64 Omarchy installations:
 omarchy plugin add https://github.com/lbiasuz/keycorner --enable --yes
 ```
 
-This URL is not available to unauthenticated users while the repository is private. The Git checkout bundles the native executable; Cargo, Python and Vial Desktop are not required at runtime. Requires Omarchy's Quickshell/Hyprland environment and system libc (glibc 2.39+), libgcc_s and liblzma.
+The Git checkout bundles the native executable; Cargo, Python and Vial Desktop are not required at runtime. Requires Omarchy's Quickshell/Hyprland environment and system libc (glibc 2.39+), libgcc_s and liblzma.
 
 Open Keycorner Settings, select a keyboard when needed, and explicitly enable device access. Standard keyboards require a layout preset. A single compatible Vial candidate can be inspected automatically once access is available; multiple candidates require selection.
 

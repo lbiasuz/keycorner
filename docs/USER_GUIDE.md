@@ -2,7 +2,7 @@
 
 ![Checks](https://github.com/lbiasuz/keycorner/actions/workflows/checks.yml/badge.svg)
 
-**v0.6.0 release candidate · private preparation · MIT desktop plugin · Omarchy 4 / Hyprland Lua**
+**v0.6.0 · MIT desktop plugin · Omarchy 4 / Hyprland Lua**
 
 A configurable, translucent overlay for **standard Linux keyboards**, with layouts read from compatible **Vial keyboards**. Runs inside Omarchy's Quickshell host as `lbiasuz.keycorner`, with a bar button and settings window. The Rust/Cargo runtime replaces the Python backend and setup helpers with one native executable. The historical Python implementation is preserved on the [`python-reference` branch](https://github.com/lbiasuz/keycorner/tree/python-reference).
 
@@ -83,7 +83,7 @@ QMK/VIA alone does not imply Vial layout discovery. Exact layer reporting requir
 
 ## Install / update
 
-The repository is private and v0.6.0 is prepared as a draft release; publication is deferred. Authorized collaborators can install from a checkout or use the attached native x86_64 archive on the [draft releases page](https://github.com/lbiasuz/keycorner/releases). The archive includes the executable and needs no Rust/Cargo installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. It targets current Omarchy/Arch Linux, not arbitrary older distributions.
+Install from a checkout or use the native x86_64 archive on the [releases page](https://github.com/lbiasuz/keycorner/releases). The archive includes the executable and needs no Rust/Cargo installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. It targets current Omarchy/Arch Linux, not arbitrary older distributions.
 
 ```sh
 git clone https://github.com/lbiasuz/keycorner.git

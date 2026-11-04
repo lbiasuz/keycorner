@@ -6,9 +6,7 @@ A movable keyboard overlay for Omarchy. See pressed keys and held modifiers, kee
 
 ![Keycorner showing simulated Shift+A](docs/marketplace/preview.png)
 
-**v0.6.0 release candidate · x86_64 Omarchy · MIT desktop plugin**
-
-The repository is currently private and the release is a draft. Publication and marketplace submission are pending.
+**v0.6.0 · x86_64 Omarchy · MIT desktop plugin**
 
 ## Features
 
@@ -26,7 +24,7 @@ The repository is currently private and the release is a draft. Publication and 
 
 Requires x86_64 Omarchy with its Quickshell/Hyprland shell, glibc 2.39+, libgcc_s and liblzma. The native runtime is bundled; Cargo, Python and Vial Desktop are not runtime requirements.
 
-Once repository access is available:
+Install through Omarchy:
 
 ```sh
 omarchy plugin add https://github.com/lbiasuz/keycorner --enable --yes
@@ -38,7 +36,7 @@ omarchy plugin add https://github.com/lbiasuz/keycorner --enable --yes
 
 Fresh installations contain no saved keyboard profiles. Per-user settings live in `~/.config/omarchy/keycorner.json`. Moving a keyboard to a different USB port may require selecting it again.
 
-The draft native archive also supports installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. See [installation and updates](docs/USER_GUIDE.md#install--update).
+The native archive also supports installation: extract it, enter `keycorner-rust`, and run `./keycorner.sh install`. See [installation and updates](docs/USER_GUIDE.md#install--update).
 
 ## Controls
 

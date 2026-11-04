@@ -35,3 +35,17 @@ See [marketplace installation](MARKETPLACE_INSTALL.md) for deployment and remain
 - [Validation evidence and remaining acceptance checks](marketplace/READINESS.md)
 
 These materials are private preparation only. Review the documented validation limits and obtain explicit publication authorization before making the repository public, publishing the draft release, or contacting marketplace maintainers.
+
+## Final publication handoff
+
+Public-facing copy and [release notes](marketplace/RELEASE_NOTES.md) are prepared without claiming a marketplace listing. The actual repository remains private and the GitHub release remains a draft until explicitly published.
+
+1. Confirm `main` has a successful Checks run and no additional changes to include.
+2. Confirm the draft `v0.6.0` targets that exact commit and contains the matching archive and `SHA256SUMS`. If changes were made after preparation, rebuild and refresh both before continuing.
+3. Make the repository public in GitHub Settings → General → Danger Zone → Change visibility. Visibility applies to all repository branches, including historical reference branches.
+4. Publish the prepared GitHub draft release. Confirm the resulting `v0.6.0` tag resolves to the tested commit.
+5. Verify an unauthenticated clone and download/checksum verification. A normal Git install must contain executable `bin/keycorner` and the root manifest. Existing users need not reset their settings.
+6. Open **Submit a plugin** from https://plugins.omarchy.org/publish.html. Use the repository URL, System category, keyboard/overlay/vial tags, prepared [listing](marketplace/LISTING.md), and `docs/marketplace/preview.png`. The feature tour links the additional screenshots.
+7. Wait for marketplace validation and maintainer review. Do not describe submission as acceptance.
+
+Do not publish personal recovery directories or temporary capture/build work. No marketplace issue or public message has been sent during preparation.
