@@ -4,6 +4,8 @@
 
 Prepared release candidate, using the Rust runtime by default. Publication is deferred.
 
+- Add fourteen regional ISO presets (UK, German, French, Spanish, Latin American Spanish, Italian and Portuguese; full-size and TKL), with shared selection/validation catalog and contribution guidance.
+
 - Add a selectable Brazilian ABNT2 standard-keyboard preset, including Ç, AltGr and extra physical keys.
 
 - Bundle the native x86_64 runtime for Git-based marketplace installs, with source/checksum validation and idempotent first-enable desktop setup.

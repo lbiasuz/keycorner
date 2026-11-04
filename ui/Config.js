@@ -1,3 +1,6 @@
+// Shared catalog for selection and saved-profile validation.
+var standardPresets = [{"id": "ansi104", "name": "US ANSI 104"}, {"id": "ansi87", "name": "US ANSI TKL"}, {"id": "ansi60", "name": "US ANSI 60%"}, {"id": "abnt2", "name": "Brazilian ABNT2"}, {"id": "gb105", "name": "UK ISO 105"}, {"id": "gb88", "name": "UK ISO TKL"}, {"id": "de105", "name": "German QWERTZ ISO 105"}, {"id": "de88", "name": "German QWERTZ ISO TKL"}, {"id": "fr105", "name": "French AZERTY (traditional) ISO 105"}, {"id": "fr88", "name": "French AZERTY (traditional) ISO TKL"}, {"id": "es105", "name": "Spanish (Spain) ISO 105"}, {"id": "es88", "name": "Spanish (Spain) ISO TKL"}, {"id": "latam105", "name": "Spanish (Latin America) ISO 105"}, {"id": "latam88", "name": "Spanish (Latin America) ISO TKL"}, {"id": "it105", "name": "Italian ISO 105"}, {"id": "it88", "name": "Italian ISO TKL"}, {"id": "pt105", "name": "Portuguese (Portugal) ISO 105"}, {"id": "pt88", "name": "Portuguese (Portugal) ISO TKL"}];
+function presetIds() { return standardPresets.map(function(p) { return p.id; }); }
 // Keep validation in one place for settings UI, IPC, and externally edited files.
 function defaults() {
     return {version: 1, backend: 'standard', deviceId: '', standardLayout: 'ansi104', keyboards: {}, shown: true, paused: false, corner: 'bottom-right', monitor: '',
@@ -21,7 +24,7 @@ function normalize(input) {
         if (!/^[a-f0-9]{24}$/.test(id) || !profile || typeof profile !== 'object' || Array.isArray(profile) ||
             typeof profile.name !== 'string' || profile.name.length > 160 ||
             ['standard','vial'].indexOf(profile.backend) === -1 ||
-            ['ansi104','ansi87','ansi60','abnt2'].indexOf(profile.standardLayout) === -1 ||
+            presetIds().indexOf(profile.standardLayout) === -1 ||
             !Number.isInteger(profile.keys) || profile.keys < 1 || profile.keys > 1024 ||
             !Number.isInteger(profile.layers) || profile.layers < 1 || profile.layers > 32) throw new Error('Invalid saved keyboard');
         profiles[id] = {name:profile.name, backend:profile.backend, standardLayout:profile.standardLayout, keys:profile.keys, layers:profile.layers};
@@ -29,7 +32,7 @@ function normalize(input) {
     result.keyboards = profiles;
     if (['standard','vial'].indexOf(result.backend) === -1) throw new Error('Invalid keyboard mode');
     if (result.deviceId && !/^[a-f0-9]{24}$/.test(result.deviceId)) throw new Error('Invalid keyboard selection');
-    if (['ansi104','ansi87','ansi60','abnt2'].indexOf(result.standardLayout) === -1) throw new Error('Invalid keyboard layout');
+    if (presetIds().indexOf(result.standardLayout) === -1) throw new Error('Invalid keyboard layout');
     if (['bottom-right','bottom-left','top-right','top-left'].indexOf(result.corner) === -1) throw new Error('Invalid corner');
     var ranges = {keySize:[28,60], opacity:[0.15,1], margin:[0,200], topMargin:[0,200], previewLayer:[0,31]};
     for (var name in ranges) {

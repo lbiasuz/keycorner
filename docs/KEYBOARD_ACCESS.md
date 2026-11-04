@@ -25,7 +25,7 @@ Profiles do not automatically switch capture to an arbitrary newly attached devi
 Open Settings, select a physical keyboard and choose a mode:
 
 - **Standard:** read-only Linux evdev input. Choose US ANSI 104, TKL (87), or
-  60% (61 keys), or Brazilian ABNT2 (107 keys). This works with ordinary USB keyboards, laptop keyboards and
+  60% (61 keys), Brazilian ABNT2 (107 keys), or one of the regional ISO full-size/TKL presets in the [layout catalog](STANDARD_LAYOUTS.md). This works with ordinary USB keyboards, laptop keyboards and
   other Linux keyboard devices with stable physical identity. Bluetooth devices
   require a stable `phys` identity; device variations still need hardware testing.
   Labels follow the selected fixed preset, not an automatic readout of the desktop's XKB

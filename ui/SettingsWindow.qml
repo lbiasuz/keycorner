@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import "Config.js" as Config
 
 FloatingWindow {
     id: window
@@ -87,8 +88,8 @@ FloatingWindow {
                 }
                 ComboBox {
                     visible: controller.config.backend === 'standard'; Layout.fillWidth: true; enabled: !controller.deviceBusy
-                    model: ['US ANSI 104', 'US ANSI TKL', 'US ANSI 60%', 'Brazilian ABNT2']
-                    property var presets: ['ansi104','ansi87','ansi60','abnt2']
+                    model: Config.standardPresets.map(function(p) { return p.name; })
+                    property var presets: Config.presetIds()
                     currentIndex: presets.indexOf(controller.config.standardLayout)
                     onActivated: controller.updateConfig({standardLayout:presets[currentIndex]})
                 }

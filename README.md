@@ -70,7 +70,7 @@ from source needs Rust/Cargo 1.88+, a C toolchain, pkg-config and liblzma develo
 files. Python 3.12+ is used by release-checking tools, and Node.js by configuration tests; neither is a runtime dependency.
 
 **Standard mode supports ordinary Linux keyboards without Vial or QMK.** Select
-one keyboard in Settings and choose a US ANSI full-size, TKL, 60%, or Brazilian ABNT2 preset.
+one keyboard in Settings and choose from 18 US ANSI, Brazilian ABNT2 and regional ISO presets. See the [layout catalog](docs/STANDARD_LAYOUTS.md) for sizes and validation status.
 These are fixed physical-layout label presets; automatic XKB labels and other ISO/custom
 physical layouts are not implemented. Broader physical-keyboard coverage remains a release requirement.
 

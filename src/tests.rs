@@ -151,6 +151,40 @@ fn abnt2_distinct_physical_keys() {
         }
     }
 }
+#[test]
+fn regional_standard_presets() {
+    for region in ["gb", "de", "fr", "es", "latam", "it", "pt"] {
+        for (suffix, count) in [("105", 105), ("88", 88)] {
+            let layout = core::standard(&format!("{region}{suffix}")).unwrap();
+            let keys = layout["keys"].as_array().unwrap();
+            assert_eq!(keys.len(), count);
+            assert!(keys.iter().any(|k| k["codes"][0] == 86));
+            assert_eq!(keys.iter().any(|k| k["codes"][0] == 79), suffix == "105");
+        }
+    }
+    for (preset, code, label) in [
+        ("de105", 21, "Z"),
+        ("de88", 44, "Y"),
+        ("fr105", 16, "A"),
+        ("fr88", 30, "Q"),
+        ("es105", 39, "Ñ"),
+        ("latam88", 40, "{"),
+        ("pt105", 39, "Ç"),
+        ("it88", 26, "è"),
+        ("gb105", 43, "#"),
+    ] {
+        let layout = core::standard(preset).unwrap();
+        assert_eq!(
+            layout["keys"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|k| k["codes"][0] == code)
+                .unwrap()["labels"][0],
+            label
+        );
+    }
+}
 fn event(kind: u16, code: u16, value: i32) -> Vec<u8> {
     let mut bytes = vec![0; std::mem::size_of::<libc::timeval>()];
     bytes.extend(kind.to_ne_bytes());

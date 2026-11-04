@@ -1,0 +1,30 @@
+name: Keyboard compatibility / layout
+description: Request a preset or report incorrect positions, labels or highlighting.
+title: "[Keyboard] "
+body:
+  - type: input
+    id: keyboard
+    attributes:
+      label: Keyboard and layout
+      description: Model, language, arrangement and size (for example German ISO TKL). No serial numbers.
+    validations:
+      required: true
+  - type: input
+    id: preset
+    attributes:
+      label: Mode and selected preset
+      description: Standard preset name, or Vial mode; include the Keycorner version.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Describe missing keys, incorrect legends/positions or highlighting. For a new layout, identify the closest existing preset.
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing and optional diagram
+      description: Say whether this is physically tested or a proposed mapping. A clean layout diagram is useful. Do not attach keystroke logs, personal keymaps, firmware dumps, serial numbers or desktop configuration.

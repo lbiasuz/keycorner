@@ -63,3 +63,25 @@ assert.equal(c.onboarding({...selected,keyboards:{[first]:{backend:'vial',standa
 assert.equal(c.onboarding({...selected,backend:'standard'},[{...vial,standardAccessible:false}]).action,'permission');
 assert.equal(c.onboarding(fresh,[ordinary]).device.id,second);
 assert.equal(c.onboarding({...selected,backend:'standard',keyboards:{[first]:{backend:'standard',standardLayout:'ansi104'}}},[{...vial,standardAccessible:true}]).action,'ready');
+
+// Every selectable preset survives saving/reselection and has a valid geometry.
+for (const p of c.standardPresets) {
+    const layout = JSON.parse(fs.readFileSync(`data/${p.id}.json`, 'utf8'));
+    const id = '0123456789abcdef01234567';
+    const cfg = c.normalize({backend:'standard',deviceId:id,standardLayout:p.id,keyboards:{[id]:{name:'Synthetic keyboard',backend:'standard',standardLayout:p.id,keys:layout.keys.length,layers:1}}});
+    const roundtrip = c.normalize(JSON.parse(JSON.stringify(cfg)));
+    assert.equal(c.selectKeyboard(roundtrip,{id,vial:false}).standardLayout,p.id);
+    const codes = new Set();
+    for (const k of layout.keys) {
+        assert.equal(k.codes.length,1); assert.equal(k.usages[0],k.codes[0]);
+        assert(!codes.has(k.codes[0])); codes.add(k.codes[0]);
+        assert(k.labels[0].length>0);
+        assert(k.x>=0 && k.y>=0 && k.w>0 && k.h>0);
+        assert(k.x+k.w<=layout.width && k.y+k.h<=layout.height);
+    }
+    for (let i=0;i<layout.keys.length;i++) for (const b of layout.keys.slice(i+1)) {
+        const a=layout.keys[i];
+        assert(a.x+a.w<=b.x || b.x+b.w<=a.x || a.y+a.h<=b.y || b.y+b.h<=a.y,`${p.id}: overlapping keys`);
+    }
+}
+console.log('All selectable layouts: geometry, unique event codes and saved-profile round trips passed.');

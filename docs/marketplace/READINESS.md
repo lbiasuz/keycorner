@@ -26,3 +26,7 @@ The lifecycle sandbox provided a separate HOME, compositor and session bus, with
 5. Review the listing and preview, then obtain explicit authorization before changing visibility or submitting anything.
 
 Keep device identifiers, layouts, logs and account details outside Git. Do not describe pending checks as passed.
+
+## First-release layout coverage
+
+All 18 presets in the [layout catalog](../STANDARD_LAYOUTS.md) are included. Physical testing is not a prerequisite for including a clearly documented preset. Additional keyboards can be supported through compatibility issues and pull requests. This does not convert untested hardware into a passed validation claim.

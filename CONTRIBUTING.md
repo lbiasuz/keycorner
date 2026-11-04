@@ -24,3 +24,5 @@ See [repository structure](docs/STRUCTURE.md). Add production UI/templates to
 that inventory. `main` supports only the Rust runtime.
 
 After changing Rust sources, embedded data, Cargo files or the runtime inventory, run `./scripts/prepare-native.sh` and commit `bin/keycorner` plus `packaging/native.json` with the sources. CI rejects stale bundles. Checksums detect drift, not malicious maintainers; review binaries and source provenance before distribution.
+
+For ordinary keyboard layouts, follow the [standard layout contribution guide](docs/STANDARD_LAYOUTS.md). Hardware access is welcome but not required: submit a synthetic mapping and clearly state its validation level. Use the Keyboard compatibility / layout issue form for requests.
